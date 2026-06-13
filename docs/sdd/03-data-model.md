@@ -384,7 +384,8 @@ Represents a physical ESP32 feeder unit. A device is registered independently of
 erDiagram
     devices {
         uuid id PK "UUID v7"
-        varchar serial_number "Unique hardware serial"
+        varchar serial_number "Unique hardware serial — registration only"
+        varchar mac_address "ESP32 MAC — optional, informational"
         varchar name "Human-readable label"
         uuid station_id FK "Assigned station — nullable"
         device_status status "online offline unassigned"
@@ -399,7 +400,8 @@ erDiagram
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | `id` | `UUID` | NO | — | Primary key. UUID v7. |
-| `serial_number` | `VARCHAR(100)` | NO | — | Unique hardware serial number printed on the device. Used in device configuration and as the MQTT client identifier. |
+| `serial_number` | `VARCHAR(100)` | NO | — | Unique hardware serial number printed on the device. Used at registration. Must not be used in MQTT topics (use `id` instead). See ADR-027. |
+| `mac_address` | `VARCHAR(17)` | YES | `NULL` | ESP32 WiFi MAC address (format: `AA:BB:CC:DD:EE:FF`). Informational only — used for provisioning traceability and debugging. Not a unique constraint; not referenced in MQTT topics or API endpoints. |
 | `name` | `VARCHAR(255)` | YES | `NULL` | Optional human-readable label (e.g., "Feeder Alpha — North Trail"). |
 | `station_id` | `UUID` | YES | `NULL` | Foreign key to `stations.id`. `NULL` means the device is not currently assigned to any station (`status = unassigned`). |
 | `status` | `device_status` | NO | `'unassigned'` | Connectivity status. Updated automatically by the telemetry handler and the device health monitor job. |
@@ -796,6 +798,8 @@ Stores every validated feeding event and sensor reading received via MQTT.
 ### 8.2 Collection: `device_telemetry`
 
 Stores periodic heartbeat messages from registered devices. Written separately from `iot_events` to enable independent indexing and retention strategies.
+
+> **MongoDB Time Series consideration:** The `device_telemetry` collection (and potentially `iot_events`) is a strong candidate for MongoDB's native [Time Series Collections](https://www.mongodb.com/docs/manual/core/timeseries-collections/) feature (available since MongoDB 5.0). Time Series collections store time-sequenced data more efficiently: compressed storage, faster range queries, and built-in bucketing by time and metadata (e.g., `device_id`). For the MVP, a standard collection is used to keep setup simple. **Post-MVP**, if `device_telemetry` write volume becomes a bottleneck or storage cost grows, migrating to a Time Series collection (specifying `timeField: "timestamp"`, `metaField: "device_id"`) is the recommended optimization. This change requires a collection recreation but no backend code changes beyond the Motor collection creation call.
 
 | Field | Type | Nullable | Description |
 |-------|------|----------|-------------|

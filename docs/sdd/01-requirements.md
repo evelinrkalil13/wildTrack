@@ -7,6 +7,7 @@
 **Changelog:**  
 - v1.1.0 — Station/Device separation; Animal multi-station redesign; Device module added; device telemetry collection added; MinIO object storage strategy; OFFLINE station status; firmware_version and last_seen on devices; station location registration flows; ADR-004 reference added; acceptance criteria updated.  
 - v1.2.0 — Self-registration rules clarified: default role, field requirements, researcher station ownership, admin bootstrap process, station access isolation.
+- v1.3.0 — MVP alignment pass: multimedia marked optional/post-MVP; camera implementation and firmware development added to out-of-scope; OTA firmware management clarified as manual USB for MVP; pragmatic local-first deployment note added; MongoDB Atlas free tier option added; out-of-scope section expanded with clear scope boundaries.
 
 ---
 
@@ -108,7 +109,7 @@ The first deliverable of WildTrack must include the following capabilities:
 | 14 | IoT event validation and storage in MongoDB |
 | 15 | Device telemetry (heartbeat) ingestion and storage in MongoDB |
 | 16 | RFID-to-animal resolution on incoming events |
-| 17 | Multimedia upload to MinIO object storage; metadata stored in MongoDB |
+| 17 | Multimedia upload to MinIO object storage; metadata stored in MongoDB — **optional/post-MVP; camera hardware not required for MVP** |
 | 18 | Operational alert generation and storage |
 | 19 | REST API for dashboard metrics |
 | 20 | REST API for geoportal data |
@@ -133,8 +134,14 @@ The following capabilities are explicitly excluded from the MVP:
 - Production cloud deployment automation (CI/CD pipelines, infrastructure-as-code)
 - Direct database writes from IoT devices
 - Multi-tenant organization management
-- Remote firmware update (OTA) management
+- Remote firmware update (OTA) management — manual USB reflashing is sufficient for MVP
 - Multi-device assignment to a single station simultaneously
+- Camera/media capture implementation — the platform schema and API reserve fields for media, but the camera hardware and capture firmware are not required for the MVP; the `media` fields in event payloads may be null
+- Firmware development — firmware implementation is outside the scope of this software project; the backend defines an MQTT ingestion contract that firmware must satisfy, but writing or testing firmware code is not a deliverable of this SDD
+
+> **Deployment note:** The MVP is designed to run locally first (Docker Compose on a developer laptop). VPS or cloud deployment is not required before the MVP is considered functional. When ready to share externally, the same Docker Compose configuration deploys to a low-cost VPS (e.g., Hetzner CX32 at ~€14/month) with no architecture changes.
+
+> **MongoDB Atlas note:** For development and MVP testing, MongoDB Atlas free tier (M0 cluster) can replace the self-hosted MongoDB container. Only the `MONGODB_URL` environment variable changes. See SDD-07 §7.7 for details.
 
 ---
 
