@@ -1,0 +1,43 @@
+# ─── Environment ──────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+dist/
+build/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+
+# ─── Node ─────────────────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+
+# ─── Docker volumes (if ever bind-mounted to project root) ───────────────────
+postgres_data/
+mongodb_data/
+minio_data/
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ─── Certificates ─────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
