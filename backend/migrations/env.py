@@ -22,9 +22,10 @@ def _db_url() -> str:
 
 config.set_main_option("sqlalchemy.url", _db_url())
 
-# target_metadata is None for now — no ORM models yet (Slice 0).
-# Slice 1 will set this to Base.metadata once the first table is defined.
-target_metadata = None
+from shared.base_model import Base
+import modules.users.models  # noqa: F401 — registers User with Base.metadata
+
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

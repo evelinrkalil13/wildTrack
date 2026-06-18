@@ -106,17 +106,16 @@ Returns the operational status of all backend dependencies. No authentication re
 ```json
 {
   "status": "ok",
-  "dependencies": {
+  "checks": {
     "postgres": "ok",
     "mongodb": "ok",
     "minio": "ok",
     "mqtt": "ok"
-  },
-  "version": "1.0.0"
+  }
 }
 ```
 
-If any dependency is unavailable, `status` is `"degraded"` and the affected dependency shows `"error"`.
+If any dependency is unavailable, the endpoint returns HTTP `503`, `status` is `"degraded"`, and the affected check shows `"error"`.
 
 ---
 
@@ -267,10 +266,12 @@ POST /auth/register
 {
   "id": "019281a8-5e2c-7f00-b3d4-a1e2f3c4d5e6",
   "name": "Ana Martínez",
+  "document": "1234567890",
   "email": "ana@example.com",
   "role": "researcher",
   "is_active": true,
-  "created_at": "2026-06-13T10:00:00Z"
+  "created_at": "2026-06-13T10:00:00Z",
+  "updated_at": "2026-06-13T10:00:00Z"
 }
 ```
 

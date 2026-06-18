@@ -42,8 +42,9 @@ class Settings(BaseSettings):
     mqtt_port: int = 1883
     mqtt_client_id: str = "wildtrack-backend"
 
-    # Security (populated in Slice 1)
+    # Security
     jwt_secret_key: str = "change-me-in-production"
+    jwt_expiry_seconds: int = 86400
 
     # Admin bootstrap (used by seed script in Slice 1)
     admin_seed_email: str = "admin@wildtrack.local"
