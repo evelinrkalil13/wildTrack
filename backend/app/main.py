@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.lifespan import lifespan
 from infrastructure.health import router as health_router
 from modules.auth.router import router as auth_router
+from modules.zones.router import router as zones_router
 from shared.base_exception import (
     ConflictError,
     ForbiddenError,
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(zones_router, prefix="/api/v1")
 
     return app
 
