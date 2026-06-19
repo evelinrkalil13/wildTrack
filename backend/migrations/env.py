@@ -24,6 +24,7 @@ config.set_main_option("sqlalchemy.url", _db_url())
 
 from shared.base_model import Base
 import modules.users.models  # noqa: F401 — registers User with Base.metadata
+import modules.zones.models  # noqa: F401 — registers Zone with Base.metadata
 
 target_metadata = Base.metadata
 

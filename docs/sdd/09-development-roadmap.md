@@ -177,31 +177,40 @@ Phase Final: Integration and Stabilization
 
 ## 6. Slice 2 — Zones
 
-**Goal:** Admin can create, list, and view zones. Zone data includes geographic coordinates. The frontend shows a simple Zones management page.
+**Goal:** Admin and researcher can create, update, and list zones. Admin can soft-delete zones. Zone data includes geographic coordinates stored in PostGIS. The frontend shows a simple Zones management page.
+
+> **Authorization correction (SDD-04 is authoritative):** POST and PATCH zones are allowed for `admin` **or** `researcher`. DELETE is `admin` only. All authenticated users (including `field_operator`) can read zones via GET.
 
 ### Backend
 
-- [ ] Alembic migration: `zones` table with PostGIS `geom GEOMETRY(POINT, 4326)` column and GiST index
-- [ ] Verify PostGIS extension: `CREATE EXTENSION IF NOT EXISTS postgis;` in migration
-- [ ] `modules/zones/`: router, schemas (`ZoneCreate`, `ZoneRead`, `ZoneList`), models, repository, service
-- [ ] `POST /zones` (admin only) — stores `latitude`/`longitude` as PostGIS POINT; returns `ZoneRead`
-- [ ] `GET /zones` — paginated list; all authenticated users
-- [ ] `GET /zones/{id}` — single zone
-- [ ] `PATCH /zones/{id}` (admin only)
-- [ ] `DELETE /zones/{id}` (admin only) — soft delete
+- [x] Alembic migration 0004: `zones` table with PostGIS `geom GEOMETRY(POINT, 4326)` column, GiST index (`ix_zones_geom`), partial unique index `(lower(name), lower(country)) WHERE deleted_at IS NULL`, and `set_zones_updated_at` trigger
+- [x] Alembic migration 0005: drop duplicate auto-created GiST index (`idx_zones_geom`) — GeoAlchemy2 auto-creates it during `create_table`; only `ix_zones_geom` is kept
+- [x] PostGIS extension: `CREATE EXTENSION IF NOT EXISTS postgis;` in migration 0004
+- [x] `modules/zones/`: router, schemas (`ZoneCreate`, `ZoneRead`, `ZoneUpdate`, `ZoneListResponse`), models, repository, service, exceptions
+- [x] `POST /zones` (`admin` or `researcher`) — stores `latitude`/`longitude` as PostGIS POINT; returns `ZoneRead`
+- [x] `GET /zones` — paginated list; supports `?country=` filter (case-insensitive); all authenticated users
+- [x] `GET /zones/{id}` — single zone; all authenticated users
+- [x] `PATCH /zones/{id}` (`admin` or `researcher`) — partial update; re-computes `geom` when lat/lon change
+- [x] `DELETE /zones/{id}` (`admin` only) — soft delete; blocked if zone has active stations
 
-**Backend tests:**
-- [ ] `test_zones_service.py`: create, get, list, soft delete
-- [ ] `test_zones_api.py`: researcher can `GET /zones`; researcher cannot `POST /zones` → 403
+> **Known stub — `ZoneRepository.has_active_stations`:** Returns `False` unconditionally in Slice 2 because the `stations` table does not yet exist. This will be replaced in Slice 3 when the stations module is implemented. Until then, `DELETE /zones/{id}` always succeeds (assuming the zone exists), regardless of station assignments.
+
+- [x] `shared/pagination.py`: `PaginatedResponse[T]`, `paginate()`, `make_paginated_response()`
+- [x] `app/dependencies.py`: `require_role()`, `require_admin`, `require_researcher_or_above`
+
+**Backend tests (completed):**
+- [x] `test_zones_service.py` (12 unit tests): create, get, list, update, delete, conflict, not-found, stub station guard
+- [x] `test_zones_api.py` (21 integration mock tests): admin/researcher/field_operator authorization for all 5 endpoints; 401 without auth; 409/404/400 error codes
+- [x] `test_zones_db_api.py` (12 real-DB tests): full CRUD against PostgreSQL+PostGIS; country filter (exact and case-insensitive); geom column populated via `ST_AsText`; soft-delete excludes records from list
 
 ### Frontend
 
-- [ ] `src/features/zones/ZonesListPage.tsx` — table of zones; `GET /zones` via TanStack Query key `["zones"]`
+- [ ] `src/features/zones/ZonesListPage.tsx` — table of zones; `GET /zones` via TanStack Query key `["zones"]`; support `?country=` filter input
 - [ ] `src/features/zones/ZoneCreatePage.tsx` — form with name, municipality, city, country, altitude, lat, lon; submits `POST /zones`
-- [ ] Add Zones link to navigation (admin only, conditionally rendered)
+- [ ] Add Zones link to navigation (admin/researcher only, conditionally rendered)
 - [ ] Error and loading states via TanStack Query
 
-**Slice 2 done when:** Admin can create a zone via the browser form. Zone appears in the zones list.
+**Slice 2 done when:** Researcher or admin can create a zone via the browser form. Zone appears in the zones list. Country filter works. Admin can delete a zone.
 
 ---
 
