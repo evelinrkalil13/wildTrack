@@ -68,8 +68,16 @@ class ZoneRepository:
 
     @staticmethod
     async def has_active_stations(session: AsyncSession, zone_id: UUID) -> bool:
-        # Stub: stations table not yet created. Returns False until Slice 3.
-        return False
+        from modules.stations.models import Station
+
+        result = await session.execute(
+            select(func.count()).select_from(
+                select(Station)
+                .where(Station.zone_id == zone_id, Station.deleted_at.is_(None))
+                .subquery()
+            )
+        )
+        return result.scalar_one() > 0
 
     @staticmethod
     def build_geom(latitude: float, longitude: float) -> WKTElement:
