@@ -123,17 +123,21 @@ class TestZonesCrudAgainstRealDb:
     def test_list_zones_returns_created_zone(self, client):
         token = _register_and_get_token(client)
         suffix = str(time.time_ns())
+        unique_country = f"DBCountry{suffix}"
         client.post(
             "/api/v1/zones",
             json=_zone_payload(suffix),
             headers={"Authorization": f"Bearer {token}"},
         )
-        r = client.get("/api/v1/zones", headers={"Authorization": f"Bearer {token}"})
+        # Filter by the unique country so this test is stable even when many zones exist in DB.
+        r = client.get(
+            f"/api/v1/zones?country={unique_country}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert r.status_code == 200
         body = r.json()
-        assert body["total"] >= 1
-        names = [z["name"] for z in body["items"]]
-        assert f"DBZone {suffix}" in names
+        assert body["total"] == 1
+        assert body["items"][0]["name"] == f"DBZone {suffix}"
 
     def test_list_zones_country_filter(self, client):
         token = _register_and_get_token(client)

@@ -220,19 +220,30 @@ Phase Final: Integration and Stabilization
 
 ### Backend
 
-- [ ] Alembic migration: `stations` table (`id`, `code`, `name`, `zone_id`, `status`, `latitude`, `longitude`, `geom`, `created_at`, `updated_at`, `deleted_at`)
-- [ ] `modules/stations/`: full CRUD
-- [ ] `POST /stations` — auto-assigns creating researcher as station owner via `user_stations` (role: `owner`); stores PostGIS POINT
-- [ ] `GET /stations` — researcher sees only stations they are members of; admin sees all
-- [ ] `GET /stations/{id}` — includes `zone`, `device` summary, `active_food`
-- [ ] `PATCH /stations/{id}` — owner or admin
-- [ ] `DELETE /stations/{id}` (admin only) — soft delete; unassigns device
-- [ ] `PATCH /devices/{device_id}/assign` — assigns device to station (admin); enforces at-most-one-device constraint
-- [ ] `PATCH /devices/{device_id}/unassign` — removes assignment; device status → `unassigned`
+- [x] Alembic migration 0006: `stations` table with `station_status` enum, PostGIS POINT, all indexes, trigger
+- [x] Alembic migration 0007: `user_stations` table with `station_user_role` enum, partial unique index, trigger
+- [x] `modules/stations/`: full CRUD (exceptions, models, schemas, repository, service, router)
+- [x] `modules/user_stations/`: models + repository (service/endpoints deferred to Slice 5)
+- [x] `POST /stations` — auto-assigns creating user as station owner via `user_stations` (role: `owner`); stores PostGIS POINT
+- [x] `GET /stations` — researcher sees only stations they are members of; admin sees all; filters: `zone_id`, `status`
+- [x] `GET /stations/{id}` — returns minimal `StationRead` (id, code, name, zone_id, lat, lon, status, timestamps); device/food/member_count deferred to Slice 4/5
+- [x] `PATCH /stations/{id}` — owner or admin; validates zone_id if changed
+- [x] `DELETE /stations/{id}` — owner or admin; soft-deletes station + all user_stations rows
+- [x] `ZoneRepository.has_active_stations()` stub replaced with real query against `stations` table
+- [ ] `PATCH /devices/{device_id}/assign` — deferred to Slice 4
+- [ ] `PATCH /devices/{device_id}/unassign` — deferred to Slice 4
+
+**Authorization (Slice 3):**
+- `POST /stations`: `admin` or `researcher`
+- `GET /stations`: any authenticated user (scoped by membership for non-admin)
+- `GET /stations/{id}`: admin or member
+- `PATCH /stations/{id}`: admin or station owner
+- `DELETE /stations/{id}`: admin or station owner
 
 **Backend tests:**
-- [ ] `test_stations_service.py`: create, list (scoped), soft delete, device assignment constraint
-- [ ] `test_stations_api.py`: researcher only sees own stations
+- [x] `test_stations_service.py`: 15 unit tests covering all service paths, all authorization branches
+- [x] `test_stations_api.py`: 18 mocked integration tests covering all 5 endpoints, all auth scenarios
+- [x] `test_stations_db_api.py`: 14 real-DB tests (CRUD, access scoping, geom verification, zone deletion blocked)
 
 ### Frontend
 
