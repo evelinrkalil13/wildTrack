@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.lifespan import lifespan
 from infrastructure.health import router as health_router
+from modules.alerts.router import router as alerts_router
 from modules.animals.router import router as animals_router
 from modules.auth.router import router as auth_router
 from modules.devices.router import router as devices_router
@@ -62,6 +63,7 @@ def create_app() -> FastAPI:
     app.include_router(foods_router, prefix="/api/v1")
     app.include_router(station_foods_router, prefix="/api/v1")
     app.include_router(members_router, prefix="/api/v1")
+    app.include_router(alerts_router, prefix="/api/v1")
 
     return app
 
