@@ -144,6 +144,49 @@ class DeviceRepository:
         await session.commit()
 
     @staticmethod
+    async def find_by_id_with_station(
+        session: AsyncSession, device_id: UUID
+    ) -> Optional[tuple]:
+        from modules.stations.models import Station
+
+        result = await session.execute(
+            select(Device, Station.code, Station.zone_id)
+            .outerjoin(Station, Device.station_id == Station.id)
+            .where(Device.id == device_id, Device.deleted_at.is_(None))
+        )
+        return result.one_or_none()
+
+    @staticmethod
+    async def update_last_seen(session: AsyncSession, device_id: UUID) -> None:
+        now = datetime.now(timezone.utc)
+        await session.execute(
+            update(Device)
+            .where(Device.id == device_id, Device.deleted_at.is_(None))
+            .values(last_seen=now, updated_at=now)
+        )
+        await session.commit()
+
+    @staticmethod
+    async def set_online(session: AsyncSession, device_id: UUID) -> None:
+        now = datetime.now(timezone.utc)
+        await session.execute(
+            update(Device)
+            .where(Device.id == device_id, Device.deleted_at.is_(None))
+            .values(status=DeviceStatus.online, last_seen=now, updated_at=now)
+        )
+        await session.commit()
+
+    @staticmethod
+    async def set_offline(session: AsyncSession, device_id: UUID) -> None:
+        now = datetime.now(timezone.utc)
+        await session.execute(
+            update(Device)
+            .where(Device.id == device_id, Device.deleted_at.is_(None))
+            .values(status=DeviceStatus.offline, updated_at=now)
+        )
+        await session.commit()
+
+    @staticmethod
     async def unassign_from_station(session: AsyncSession, station_id: UUID) -> None:
         now = datetime.now(timezone.utc)
         await session.execute(
