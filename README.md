@@ -47,7 +47,7 @@ cd backend
 uv sync
 ```
 
-**4. Run database migrations**
+**4. Run the empty baseline migration**
 
 ```bash
 cd backend
@@ -56,10 +56,8 @@ uv run alembic upgrade head
 
 Expected output:
 ```
-INFO  [alembic.runtime.migration] Running upgrade ...
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001, empty baseline
 ```
-
-After Slice 1, `alembic current` should report the latest auth migration at head.
 
 **5. Start the API**
 
@@ -97,8 +95,7 @@ uv sync --extra dev
 uv run python -m pytest -v
 ```
 
-Most tests mock infrastructure. The DB-backed auth integration test is skipped unless
-`RUN_DB_INTEGRATION_TESTS=1` is set and PostgreSQL is running.
+Tests mock all infrastructure probes — no live services required.
 
 ### Project structure
 

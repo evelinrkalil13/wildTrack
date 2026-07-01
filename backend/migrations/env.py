@@ -1,23 +1,22 @@
 import asyncio
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+from shared.config import get_settings
 
 config = context.config
 fileConfig(config.config_file_name)
 
 # Build the database URL from environment variables (overrides alembic.ini blank value).
 def _db_url() -> str:
-    host = os.getenv("POSTGRES_HOST", "localhost")
-    port = os.getenv("POSTGRES_PORT", "5432")
-    db = os.getenv("POSTGRES_DB", "wildtrack")
-    user = os.getenv("POSTGRES_USER", "wildtrack")
-    password = os.getenv("POSTGRES_PASSWORD", "wildtrack")
-    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+    settings = get_settings()
+    return (
+        f"postgresql+asyncpg://{settings.postgres_user}:{settings.postgres_password}"
+        f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
+    )
 
 
 config.set_main_option("sqlalchemy.url", _db_url())
@@ -27,6 +26,10 @@ import modules.users.models  # noqa: F401 — registers User with Base.metadata
 import modules.zones.models  # noqa: F401 — registers Zone with Base.metadata
 import modules.stations.models  # noqa: F401 — registers Station with Base.metadata
 import modules.user_stations.models  # noqa: F401 — registers UserStation with Base.metadata
+import modules.devices.models  # noqa: F401 — registers Device with Base.metadata
+import modules.animals.models  # noqa: F401 — registers Animal with Base.metadata
+import modules.foods.models  # noqa: F401 — registers Food with Base.metadata
+import modules.station_foods.models  # noqa: F401 — registers StationFood with Base.metadata
 
 target_metadata = Base.metadata
 

@@ -262,18 +262,22 @@ Phase Final: Integration and Stabilization
 
 ### Backend
 
-- [ ] Alembic migration: `devices` table (`id`, `serial_number`, `mac_address` [nullable], `name`, `station_id`, `status`, `firmware_version`, `last_seen_at`, `created_at`, `updated_at`, `deleted_at`)
-- [ ] `modules/devices/`: full CRUD
-- [ ] `POST /devices` (admin) — serial_number uniqueness enforced; returns `device_id` (UUID v7)
-- [ ] `GET /devices` — admin: all; researcher: devices assigned to their stations
-- [ ] `GET /devices/{id}`
-- [ ] `PATCH /devices/{id}` (admin)
-- [ ] `DELETE /devices/{id}` (admin) — soft delete; unassigns from station
-- [ ] `PATCH /devices/{id}/assign` and `/unassign` (already scaffolded in Slice 3; finalize here)
+- [x] Alembic migration: `devices` table (`id`, `serial_number`, `mac_address` [nullable], `name`, `station_id`, `status`, `firmware_version`, `last_seen`, `created_at`, `updated_at`, `deleted_at`) — `device_status` enum: `online`, `offline`, `unassigned`; partial unique on serial, partial unique one-device-per-station; CHECK constraint enforcing status ↔ station_id integrity
+- [x] `modules/devices/`: exceptions, models, schemas, repository, service, router
+- [x] `POST /devices` (admin) — serial_number uniqueness enforced; returns `DeviceRead` with `status=unassigned`; optional `mac_address` (informational only, non-unique)
+- [x] `GET /devices` — admin sees all (including unassigned); researcher sees only devices assigned to their stations; filters: `status`, `station_id`
+- [x] `GET /devices/{id}` — admin or station member; returns `DeviceRead` with `station_code` (resolved via LEFT JOIN)
+- [x] `PATCH /devices/{id}` (admin) — update `name` only
+- [x] `DELETE /devices/{id}` (admin) — soft delete; auto-unassigns from station before deleting
+- [x] `PATCH /devices/{id}/assign` (admin) — validates device is unassigned, station exists, station has no active device; sets `status=online`
+- [x] `PATCH /devices/{id}/unassign` (admin) — validates device is assigned; sets `station_id=NULL`, `status=unassigned`
+- [x] `stations/service.py` `delete_station` updated: calls `DeviceRepository.unassign_from_station` before soft-deleting station (cascade unassign)
+- [x] `GET /devices/{id}/telemetry` and `/latest` — **deferred to Slice 6 (MongoDB not yet configured)**
 
 **Backend tests:**
-- [ ] `test_devices_service.py`: register, assign/unassign, serial_number conflict → 409
-- [ ] `test_devices_api.py`: admin-only write; researcher read-scoped
+- [x] `test_devices_service.py`: 22 unit tests — create (happy path, serial conflict), get (admin any device, non-admin blocked on unassigned/non-member), list (admin vs. non-admin scoping, filters), update, assign (happy path, already assigned, station has device, station not found), unassign (happy path, not assigned), delete (unassigned, auto-unassign assigned, not found)
+- [x] `test_devices_api.py`: 22 mocked API tests — all 7 endpoints, auth enforcement (401/403), 400/404/409 error paths, filter passthrough
+- [x] `test_devices_db_api.py`: 15 real-DB tests — create/duplicate serial, admin vs. researcher access, assign/unassign, at-most-one-device constraint, delete device, station delete cascades device unassign
 
 ### Frontend
 
@@ -292,17 +296,36 @@ Phase Final: Integration and Stabilization
 
 ### Backend
 
-- [ ] Alembic migration: `animals` table (`id`, `rfid_tag` [unique, nullable], `species`, `sex`, `estimated_age`, `is_identified`, `created_at`, `updated_at`, `deleted_at`)
-- [ ] Alembic migration: `foods` table; `station_foods` table; `user_stations` table
-- [ ] `modules/animals/`: full CRUD; `GET /animals/{id}/stations` derived from MongoDB `iot_events` query
-- [ ] `modules/foods/`: full CRUD (admin write, all authenticated read)
-- [ ] `modules/station_foods/`: `POST /stations/{id}/foods`, `PATCH /stations/{id}/foods/{food_id}` (activate/deactivate)
-- [ ] `modules/user_stations/`: `POST /stations/{id}/members`, `DELETE /stations/{id}/members/{user_id}` (owner/admin)
+- [x] Alembic migration 0009: `animal_sex` enum + `animals` table (`id`, `rfid_tag` [partial unique nullable], `species`, `sex`, `estimated_age`, `is_identified`, `notes`, `deleted_at`, `created_at`, `updated_at`)
+- [x] Alembic migration 0010: `foods` table (`id`, `name` [partial unique active], `type`, `description`, `deleted_at`, `created_at`, `updated_at`)
+- [x] Alembic migration 0011: `station_foods` table — no `deleted_at`; `active` flag; partial unique `(station_id) WHERE active = TRUE`; FK cascade/restrict
+- [x] `modules/animals/`: full CRUD — `POST`, `GET` (list + filters), `GET /{id}`, `PATCH /{id}`, `DELETE /{id}` (admin); `is_identified` auto-maintained from `rfid_tag`
+- [x] `GET /animals/{id}/stations` — stub returning `stations: []`; MongoDB query deferred to Slice 6
+- [x] `modules/foods/`: `POST`, `GET` (list), `GET /{id}`, `PATCH /{id}` (researcher/admin), `DELETE /{id}` (admin); blocked if food is active at any station
+- [x] `modules/station_foods/`: `POST /stations/{id}/foods`, `GET /stations/{id}/foods`, `PATCH /{sfid}/activate`, `PATCH /{sfid}/deactivate`, `DELETE /{sfid}` — atomic active-food swap; blocked delete if active
+- [x] `modules/user_stations/`: extended with service + schemas + router — `POST /stations/{id}/members`, `GET /stations/{id}/members`, `PATCH /stations/{id}/members/{us_id}`, `DELETE /stations/{id}/members/{us_id}`; cannot assign/change/remove owner role
+- [x] `shared/enums.py`: `AnimalSex` enum added
+- [x] `StationFoodRead` includes `food_name` and `food_type` (JOIN with foods)
+- [x] `MemberRead` includes `user_name` and `user_email` (JOIN with users)
+
+**Discrepancy resolutions applied:**
+- SDD-09 listed `user_stations` table migration as Slice 5 work — already created in migration 0007 (Slice 3); skipped.
+- SDD-09 described only POST + DELETE for members; SDD-04 §13 defines 4 endpoints — all 4 implemented per SDD-04.
+- `GET /animals/{id}/stations` requires MongoDB; stub returns empty list until Slice 6 wires Motor client.
 
 **Backend tests:**
-- [ ] `test_animals_service.py`: register, RFID conflict → 409, list, soft delete
-- [ ] `test_foods_service.py`: create, assign to station, activate/deactivate
-- [ ] `test_user_stations_service.py`: assign member, remove member, cannot remove owner
+- [x] `test_animals_service.py` (20 unit tests): create, RFID conflict → 409, `is_identified` sync on update/clear, get, list, delete, stations stub
+- [x] `test_foods_service.py` (15 unit tests): create, name conflict → 409, update, delete blocked by active station, delete allowed, list
+- [x] `test_station_foods_service.py` (18 unit tests): add food, active swap, food already associated → 409, station not found → 404, activate/deactivate, cannot remove active → 400, non-owner → 403
+- [x] `test_members_service.py` (15 unit tests): assign, already member → 409, cannot assign owner, non-owner → 403, update role, cannot change owner, remove, cannot remove owner
+- [x] `test_animals_api.py` (18 mocked API tests): all 6 endpoints; 401/403/404/409; field validation
+- [x] `test_foods_api.py` (16 mocked API tests): all 5 endpoints; field_operator blocked → 403; FOOD_IN_USE → 400
+- [x] `test_station_foods_api.py` (13 mocked API tests): all 5 endpoints; CANNOT_REMOVE_ACTIVE → 400; FOOD_ALREADY_ASSOCIATED → 409
+- [x] `test_members_api.py` (14 mocked API tests): all 4 endpoints; owner role → 422; CANNOT_REMOVE_OWNER → 400; CANNOT_CHANGE_OWNER → 400
+- [x] `test_animals_db_api.py` (11 real-DB tests): create with/without RFID; duplicate RFID → 409; update RFID syncs `is_identified`; filters; stations stub; admin delete; non-admin blocked
+- [x] `test_foods_db_api.py` (8 real-DB tests): create; duplicate name → 409; field_operator blocked; get/update; admin delete; researcher blocked
+- [x] `test_station_foods_db_api.py` (7 real-DB tests): add; active swap; duplicate → 409; activate/deactivate cycle; cannot remove active → 400; remove inactive → 204; catalog delete blocked when active
+- [x] `test_members_db_api.py` (8 real-DB tests): assign; cannot assign owner → 422; duplicate → 409; list includes owner; update role; cannot remove owner → 400; remove → 204; non-member cannot list → 403
 
 ### Frontend
 
