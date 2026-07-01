@@ -149,5 +149,8 @@ class StationService:
             if role != StationUserRole.owner:
                 raise StationAccessDeniedError()
 
+        from modules.devices.repository import DeviceRepository
+        await DeviceRepository.unassign_from_station(session, station_id)
+
         await UserStationRepository.soft_delete_all_for_station(session, station_id)
         await StationRepository.soft_delete(session, station)

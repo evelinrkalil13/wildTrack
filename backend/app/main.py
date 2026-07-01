@@ -3,8 +3,13 @@ from fastapi.responses import JSONResponse
 
 from app.lifespan import lifespan
 from infrastructure.health import router as health_router
+from modules.animals.router import router as animals_router
 from modules.auth.router import router as auth_router
+from modules.devices.router import router as devices_router
+from modules.foods.router import router as foods_router
+from modules.station_foods.router import router as station_foods_router
 from modules.stations.router import router as stations_router
+from modules.user_stations.router import router as members_router
 from modules.zones.router import router as zones_router
 from shared.base_exception import (
     ConflictError,
@@ -52,6 +57,11 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(zones_router, prefix="/api/v1")
     app.include_router(stations_router, prefix="/api/v1")
+    app.include_router(devices_router, prefix="/api/v1")
+    app.include_router(animals_router, prefix="/api/v1")
+    app.include_router(foods_router, prefix="/api/v1")
+    app.include_router(station_foods_router, prefix="/api/v1")
+    app.include_router(members_router, prefix="/api/v1")
 
     return app
 
