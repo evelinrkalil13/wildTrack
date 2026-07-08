@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-production"
     jwt_expiry_seconds: int = 86400
 
+    # CORS — comma-separated list of allowed origins
+    cors_origins: str = "http://localhost:5173"
+
     # Admin bootstrap (used by seed script in Slice 1)
     admin_seed_email: str = "admin@wildtrack.local"
     admin_seed_password: str = "ChangeThisImmediately!"

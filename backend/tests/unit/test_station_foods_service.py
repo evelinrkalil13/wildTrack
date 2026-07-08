@@ -298,3 +298,42 @@ class TestRemoveStationFood:
         ):
             with pytest.raises(StationFoodNotFoundError):
                 await StationFoodService.remove_station_food(session, station.id, uuid.uuid4(), admin)
+
+
+# ---------------------------------------------------------------------------
+# get_food_stations
+# ---------------------------------------------------------------------------
+
+class TestGetFoodStations:
+    async def test_returns_stations_for_food(self, session):
+        food = _make_food()
+        now = datetime.now(timezone.utc)
+        station_id = uuid.uuid4()
+        rows = [(station_id, "EST-001", "North Feeder", True, now)]
+        user = _make_user()
+        with (
+            patch("modules.station_foods.service.FoodRepository.find_by_id", new=AsyncMock(return_value=food)),
+            patch("modules.station_foods.service.StationFoodRepository.list_stations_by_food", new=AsyncMock(return_value=rows)),
+        ):
+            result = await StationFoodService.get_food_stations(session, food.id, user)
+        assert result.total == 1
+        assert result.items[0].station_code == "EST-001"
+        assert result.items[0].station_name == "North Feeder"
+        assert result.items[0].active is True
+
+    async def test_returns_empty_list_when_no_stations(self, session):
+        food = _make_food()
+        user = _make_user()
+        with (
+            patch("modules.station_foods.service.FoodRepository.find_by_id", new=AsyncMock(return_value=food)),
+            patch("modules.station_foods.service.StationFoodRepository.list_stations_by_food", new=AsyncMock(return_value=[])),
+        ):
+            result = await StationFoodService.get_food_stations(session, food.id, user)
+        assert result.total == 0
+        assert result.items == []
+
+    async def test_raises_not_found_when_food_missing(self, session):
+        user = _make_user()
+        with patch("modules.station_foods.service.FoodRepository.find_by_id", new=AsyncMock(return_value=None)):
+            with pytest.raises(FoodNotFoundError):
+                await StationFoodService.get_food_stations(session, uuid.uuid4(), user)

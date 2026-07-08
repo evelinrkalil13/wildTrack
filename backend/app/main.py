@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.lifespan import lifespan
 from infrastructure.health import router as health_router
 from modules.alerts.router import router as alerts_router
+from modules.geoportal.router import router as geoportal_router
 from modules.media.router import router as media_router
 from modules.animals.router import router as animals_router
 from modules.auth.router import router as auth_router
@@ -12,6 +14,7 @@ from modules.foods.router import router as foods_router
 from modules.station_foods.router import router as station_foods_router
 from modules.stations.router import router as stations_router
 from modules.user_stations.router import router as members_router
+from modules.users.router import router as users_router
 from modules.zones.router import router as zones_router
 from shared.base_exception import (
     ConflictError,
@@ -53,6 +56,15 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    allowed_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.add_exception_handler(WildTrackException, _wildtrack_exception_handler)
 
     app.include_router(health_router)
@@ -64,8 +76,10 @@ def create_app() -> FastAPI:
     app.include_router(foods_router, prefix="/api/v1")
     app.include_router(station_foods_router, prefix="/api/v1")
     app.include_router(members_router, prefix="/api/v1")
+    app.include_router(users_router, prefix="/api/v1")
     app.include_router(alerts_router, prefix="/api/v1")
     app.include_router(media_router, prefix="/api/v1")
+    app.include_router(geoportal_router, prefix="/api/v1")
 
     return app
 
