@@ -1,5 +1,9 @@
 import json
 import logging
+
+# strict=False allows unescaped control characters in JSON strings.
+# ESP32 firmware may embed raw RFID bytes directly in string fields.
+_decoder = json.JSONDecoder(strict=False)
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -18,8 +22,8 @@ class IotEventService:
     @staticmethod
     async def process_feeding_event(device_id: str, raw: bytes) -> None:
         try:
-            data = json.loads(raw)
-        except json.JSONDecodeError as exc:
+            data = _decoder.decode(raw.decode("utf-8", errors="replace"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             logger.error("MQTT JSON decode error on events topic device=%s: %s", device_id, exc)
             await IotEventRepository.insert_dead_letter({
                 "topic": f"wildtrack/devices/{device_id}/events",
@@ -125,8 +129,8 @@ class IotEventService:
     @staticmethod
     async def process_telemetry(device_id: str, raw: bytes) -> None:
         try:
-            data = json.loads(raw)
-        except json.JSONDecodeError as exc:
+            data = _decoder.decode(raw.decode("utf-8", errors="replace"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             logger.error("MQTT JSON decode error on telemetry topic device=%s: %s", device_id, exc)
             return
 
@@ -163,8 +167,8 @@ class IotEventService:
     @staticmethod
     async def process_status(device_id: str, raw: bytes) -> None:
         try:
-            data = json.loads(raw)
-        except json.JSONDecodeError as exc:
+            data = _decoder.decode(raw.decode("utf-8", errors="replace"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             logger.error("MQTT JSON decode error on status topic device=%s: %s", device_id, exc)
             return
 

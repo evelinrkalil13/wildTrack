@@ -48,6 +48,8 @@ class TelemetryPayload(BaseModel):
 
 
 class StatusPayload(BaseModel):
-    device_id: str
+    # device_id and timestamp are optional: the ESP32 LWT message omits them.
+    # device_id is always taken from the MQTT topic path instead.
+    device_id: Optional[str] = None
     status: str
-    timestamp: datetime
+    timestamp: Optional[datetime] = None
