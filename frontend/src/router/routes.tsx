@@ -16,9 +16,10 @@ const StationsPage = lazy(() => import("@/features/stations/pages/StationsPage")
 const DevicesPage = lazy(() => import("@/features/devices/pages/DevicesPage"));
 const AnimalsPage = lazy(() => import("@/features/animals/pages/AnimalsPage"));
 const FoodsPage   = lazy(() => import("@/features/foods/pages/FoodsPage"));
-const AlertsPage      = lazy(() => import("@/features/alerts/pages/AlertsPage"));
-const GeoportalPage   = lazy(() => import("@/features/geoportal/pages/GeoportalPage"));
-const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));
+const AlertsPage    = lazy(() => import("@/features/alerts/pages/AlertsPage"));
+const GeoportalPage = lazy(() => import("@/features/geoportal/pages/GeoportalPage"));
+const ProfilePage   = lazy(() => import("@/features/profile/pages/ProfilePage"));
+const UsersPage     = lazy(() => import("@/features/users/pages/UsersPage"));
 
 function PageLoader() {
   return (
@@ -82,7 +83,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/profile",
-            element: wrap(<PlaceholderPage title="Mi perfil" slice="FE-7" />),
+            element: wrap(<ProfilePage />),
           },
           // Admin + Researcher
           {
@@ -110,7 +111,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: "/app/users",
-                element: wrap(<PlaceholderPage title="Usuarios" slice="FE-7" />),
+                element: wrap(<UsersPage />),
               },
             ],
           },

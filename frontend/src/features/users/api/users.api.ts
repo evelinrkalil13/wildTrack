@@ -1,5 +1,5 @@
 import { apiClient } from "@/api/client";
-import type { UserListResponse } from "./users.types";
+import type { UserListItem, UserListResponse, UserRoleUpdateRequest } from "./users.types";
 
 export interface ListUsersParams {
   page: number;
@@ -9,5 +9,10 @@ export interface ListUsersParams {
 
 export async function listUsers(params: ListUsersParams): Promise<UserListResponse> {
   const res = await apiClient.get<UserListResponse>("/users", { params });
+  return res.data;
+}
+
+export async function updateUserRole(userId: string, data: UserRoleUpdateRequest): Promise<UserListItem> {
+  const res = await apiClient.patch<UserListItem>(`/users/${userId}/role`, data);
   return res.data;
 }

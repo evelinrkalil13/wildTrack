@@ -52,3 +52,9 @@ class UserRepository:
         await session.commit()
         await session.refresh(user)
         return user
+
+    @staticmethod
+    async def save(session: AsyncSession, user: User) -> User:
+        await session.commit()
+        await session.refresh(user)
+        return user
