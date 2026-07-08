@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.lifespan import lifespan
 from infrastructure.health import router as health_router
 from modules.alerts.router import router as alerts_router
+from modules.geoportal.router import router as geoportal_router
 from modules.media.router import router as media_router
 from modules.animals.router import router as animals_router
 from modules.auth.router import router as auth_router
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(alerts_router, prefix="/api/v1")
     app.include_router(media_router, prefix="/api/v1")
+    app.include_router(geoportal_router, prefix="/api/v1")
 
     return app
 

@@ -16,7 +16,8 @@ const StationsPage = lazy(() => import("@/features/stations/pages/StationsPage")
 const DevicesPage = lazy(() => import("@/features/devices/pages/DevicesPage"));
 const AnimalsPage = lazy(() => import("@/features/animals/pages/AnimalsPage"));
 const FoodsPage   = lazy(() => import("@/features/foods/pages/FoodsPage"));
-const AlertsPage  = lazy(() => import("@/features/alerts/pages/AlertsPage"));
+const AlertsPage      = lazy(() => import("@/features/alerts/pages/AlertsPage"));
+const GeoportalPage   = lazy(() => import("@/features/geoportal/pages/GeoportalPage"));
 const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));
 
 function PageLoader() {
@@ -65,7 +66,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/map",
-            element: wrap(<PlaceholderPage title="Geoportal" slice="FE-6" />),
+            element: wrap(<GeoportalPage />),
           },
           {
             path: "/app/stations",
