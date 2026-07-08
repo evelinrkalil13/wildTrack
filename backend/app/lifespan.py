@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from infrastructure.minio_client import ensure_bucket_public
 from infrastructure.mongodb import motor_client
 from infrastructure.postgres import engine
 from modules.iot_events.processor import mqtt_subscriber_task
@@ -13,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, ensure_bucket_public)
+    logger.info("MinIO bucket ready")
+
     task = asyncio.create_task(mqtt_subscriber_task())
     logger.info("MQTT subscriber task started")
     try:
