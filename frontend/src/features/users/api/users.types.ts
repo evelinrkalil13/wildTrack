@@ -14,3 +14,7 @@ export interface UserListResponse {
   pages: number;
   items: UserListItem[];
 }
+
+export interface UserRoleUpdateRequest {
+  role: UserRole;
+}
