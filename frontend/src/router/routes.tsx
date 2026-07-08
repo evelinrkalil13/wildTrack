@@ -14,6 +14,9 @@ const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ZonesPage = lazy(() => import("@/features/zones/pages/ZonesPage"));
 const StationsPage = lazy(() => import("@/features/stations/pages/StationsPage"));
 const DevicesPage = lazy(() => import("@/features/devices/pages/DevicesPage"));
+const AnimalsPage = lazy(() => import("@/features/animals/pages/AnimalsPage"));
+const FoodsPage   = lazy(() => import("@/features/foods/pages/FoodsPage"));
+const AlertsPage  = lazy(() => import("@/features/alerts/pages/AlertsPage"));
 const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));
 
 function PageLoader() {
@@ -70,11 +73,11 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/animals",
-            element: wrap(<PlaceholderPage title="Animales" slice="FE-4" />),
+            element: wrap(<AnimalsPage />),
           },
           {
             path: "/app/alerts",
-            element: wrap(<PlaceholderPage title="Alertas" slice="FE-4" />),
+            element: wrap(<AlertsPage />),
           },
           {
             path: "/app/profile",
@@ -92,7 +95,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: "/app/foods",
-                element: wrap(<PlaceholderPage title="Alimentos" slice="FE-4" />),
+                element: wrap(<FoodsPage />),
               },
             ],
           },

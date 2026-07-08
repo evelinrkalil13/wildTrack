@@ -24,3 +24,16 @@ class StationFoodRead(BaseModel):
 
 
 StationFoodListResponse = PaginatedResponse[StationFoodRead]
+
+
+class FoodStationRead(BaseModel):
+    station_id: UUID
+    station_code: str
+    station_name: str
+    active: bool
+    created_at: datetime
+
+
+class FoodStationListResponse(BaseModel):
+    total: int
+    items: list[FoodStationRead]

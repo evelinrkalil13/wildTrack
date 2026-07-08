@@ -13,6 +13,7 @@ from modules.foods.router import router as foods_router
 from modules.station_foods.router import router as station_foods_router
 from modules.stations.router import router as stations_router
 from modules.user_stations.router import router as members_router
+from modules.users.router import router as users_router
 from modules.zones.router import router as zones_router
 from shared.base_exception import (
     ConflictError,
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(foods_router, prefix="/api/v1")
     app.include_router(station_foods_router, prefix="/api/v1")
     app.include_router(members_router, prefix="/api/v1")
+    app.include_router(users_router, prefix="/api/v1")
     app.include_router(alerts_router, prefix="/api/v1")
     app.include_router(media_router, prefix="/api/v1")
 

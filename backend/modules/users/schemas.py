@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 from shared.enums import UserRole
+from shared.pagination import PaginatedResponse
 
 
 class UserSummary(BaseModel):
@@ -13,6 +14,9 @@ class UserSummary(BaseModel):
     name: str
     email: EmailStr
     role: UserRole
+
+
+UserListResponse = PaginatedResponse[UserSummary]
 
 
 class UserRead(BaseModel):

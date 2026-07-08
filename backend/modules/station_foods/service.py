@@ -13,6 +13,8 @@ from modules.station_foods.exceptions import (
 from modules.station_foods.models import StationFood
 from modules.station_foods.repository import StationFoodRepository
 from modules.station_foods.schemas import (
+    FoodStationListResponse,
+    FoodStationRead,
     StationFoodAdd,
     StationFoodListResponse,
     StationFoodRead,
@@ -157,6 +159,27 @@ class StationFoodService:
         sf.active = False
         sf = await StationFoodRepository.update(session, sf)
         return _sf_to_read(sf, food_name, food_type)
+
+    @staticmethod
+    async def get_food_stations(
+        session: AsyncSession, food_id: UUID, current_user
+    ) -> FoodStationListResponse:
+        food = await FoodRepository.find_by_id(session, food_id)
+        if food is None:
+            raise FoodNotFoundError()
+
+        rows = await StationFoodRepository.list_stations_by_food(session, food_id)
+        items = [
+            FoodStationRead(
+                station_id=station_id,
+                station_code=code,
+                station_name=name,
+                active=active,
+                created_at=created_at,
+            )
+            for station_id, code, name, active, created_at in rows
+        ]
+        return FoodStationListResponse(total=len(items), items=items)
 
     @staticmethod
     async def remove_station_food(

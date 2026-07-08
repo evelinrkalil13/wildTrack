@@ -23,10 +23,12 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PeopleIcon from "@mui/icons-material/People";
 import { useStations } from "../hooks/useStations";
 import { useDeleteStation } from "../hooks/useStationMutations";
 import StationFormDialog from "../components/StationFormDialog";
 import StationStatusChip from "../components/StationStatusChip";
+import MembersDialog from "@/features/members/components/MembersDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAllZones } from "@/features/zones/hooks/useZones";
 import type { StationRead } from "../api/stations.types";
@@ -61,10 +63,11 @@ export default function StationsPage() {
   const [pageSize, setPageSize]   = useState(10);
   const [statusFilter, setStatusFilter] = useState<StationStatus | "">("");
 
-  const [formOpen, setFormOpen]         = useState(false);
-  const [editTarget, setEditTarget]     = useState<StationRead | undefined>();
-  const [deleteTarget, setDeleteTarget] = useState<StationRead | null>(null);
-  const [snackbar, setSnackbar]         = useState<SnackbarState>({ open: false, message: "", severity: "success" });
+  const [formOpen, setFormOpen]           = useState(false);
+  const [editTarget, setEditTarget]       = useState<StationRead | undefined>();
+  const [deleteTarget, setDeleteTarget]   = useState<StationRead | null>(null);
+  const [membersStation, setMembersStation] = useState<StationRead | null>(null);
+  const [snackbar, setSnackbar]           = useState<SnackbarState>({ open: false, message: "", severity: "success" });
 
   const { data, isLoading, isError } = useStations({
     page,
@@ -210,6 +213,11 @@ export default function StationsPage() {
                   <TableCell>{formatDate(station.created_at)}</TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                      <Tooltip title="Miembros">
+                        <IconButton size="small" onClick={() => setMembersStation(station)}>
+                          <PeopleIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Editar">
                         <IconButton size="small" onClick={() => handleEdit(station)}>
                           <EditIcon fontSize="small" />
@@ -248,6 +256,12 @@ export default function StationsPage() {
       </Paper>
 
       {/* Dialogs */}
+      <MembersDialog
+        open={!!membersStation}
+        station={membersStation}
+        onClose={() => setMembersStation(null)}
+      />
+
       <StationFormDialog
         open={formOpen}
         initialData={editTarget}

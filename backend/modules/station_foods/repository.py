@@ -106,6 +106,20 @@ class StationFoodRepository:
         return result.one_or_none()
 
     @staticmethod
+    async def list_stations_by_food(
+        session: AsyncSession, food_id: UUID
+    ) -> list[tuple]:
+        from modules.stations.models import Station
+
+        result = await session.execute(
+            select(StationFood.station_id, Station.code, Station.name, StationFood.active, StationFood.created_at)
+            .join(Station, StationFood.station_id == Station.id)
+            .where(StationFood.food_id == food_id)
+            .order_by(StationFood.active.desc(), StationFood.created_at.desc())
+        )
+        return list(result.all())
+
+    @staticmethod
     async def deactivate(session: AsyncSession, sf: StationFood) -> None:
         """Set active=False and flush immediately so the unique index is satisfied
         before the subsequent activation UPDATE is sent in the same transaction."""

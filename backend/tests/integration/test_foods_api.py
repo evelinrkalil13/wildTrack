@@ -189,3 +189,56 @@ class TestDeleteFood:
         with patch("modules.foods.router.FoodService.delete_food", new=AsyncMock(side_effect=FoodNotFoundError())):
             r = client.delete(f"/api/v1/foods/{uuid.uuid4()}")
         assert r.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# GET /foods/{id}/stations
+# ---------------------------------------------------------------------------
+
+class TestGetFoodStations:
+    def _make_station_list_response(self, n: int = 1):
+        from modules.station_foods.schemas import FoodStationListResponse, FoodStationRead
+        now = datetime.now(timezone.utc)
+        items = [
+            FoodStationRead(
+                station_id=uuid.uuid4(),
+                station_code=f"EST-00{i + 1}",
+                station_name=f"Feeder {i + 1}",
+                active=True,
+                created_at=now,
+            )
+            for i in range(n)
+        ]
+        return FoodStationListResponse(total=n, items=items)
+
+    def test_returns_200_with_station_list(self):
+        response = self._make_station_list_response(2)
+        client = _make_auth_client()
+        with patch("modules.foods.router.StationFoodService.get_food_stations", new=AsyncMock(return_value=response)):
+            r = client.get(f"/api/v1/foods/{uuid.uuid4()}/stations")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total"] == 2
+        assert data["items"][0]["station_code"] == "EST-001"
+
+    def test_returns_empty_list_when_no_stations(self):
+        from modules.station_foods.schemas import FoodStationListResponse
+        response = FoodStationListResponse(total=0, items=[])
+        client = _make_auth_client()
+        with patch("modules.foods.router.StationFoodService.get_food_stations", new=AsyncMock(return_value=response)):
+            r = client.get(f"/api/v1/foods/{uuid.uuid4()}/stations")
+        assert r.status_code == 200
+        assert r.json()["total"] == 0
+        assert r.json()["items"] == []
+
+    def test_unknown_food_returns_404(self):
+        client = _make_auth_client()
+        with patch("modules.foods.router.StationFoodService.get_food_stations", new=AsyncMock(side_effect=FoodNotFoundError())):
+            r = client.get(f"/api/v1/foods/{uuid.uuid4()}/stations")
+        assert r.status_code == 404
+        assert r.json()["error"] == "NOT_FOUND"
+
+    def test_unauthenticated_returns_401(self):
+        client = _make_no_auth_client()
+        r = client.get(f"/api/v1/foods/{uuid.uuid4()}/stations")
+        assert r.status_code == 401

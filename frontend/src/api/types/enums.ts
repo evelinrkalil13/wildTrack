@@ -22,3 +22,9 @@ export enum StationUserRole {
   researcher = "researcher",
   field_operator = "field_operator",
 }
+
+export enum AnimalSex {
+  male = "male",
+  female = "female",
+  unknown = "unknown",
+}
