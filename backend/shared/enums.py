@@ -39,3 +39,10 @@ class AlertType(str, enum.Enum):
     inactive_station = "inactive_station"
     empty_tank = "empty_tank"
     camera_failure = "camera_failure"
+
+
+class TimeFilter(str, enum.Enum):
+    h24 = "24h"
+    d7 = "7d"
+    d30 = "30d"
+    all = "all"

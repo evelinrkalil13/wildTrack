@@ -1,58 +1,95 @@
 import { useMemo } from "react";
-import { Marker, Tooltip } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import type { GeoportalStationRead } from "../api/geoportal.types";
+import type { GeoportalStationMapItem } from "../api/geoportal.types";
 import { StationStatus } from "@/api/types/enums";
+import StationPopup from "./StationPopup";
 
-function effectiveColor(station: GeoportalStationRead): string {
-  if (station.open_alerts_count > 0) return "#e08a1e";
-  if (station.status === StationStatus.active) return "#52b788";
-  if (station.status === StationStatus.maintenance) return "#e08a1e";
-  return "#5f7669";
-}
+const COLORS = {
+  forest: "#2d6a4f",
+  amber: "#e08a1e",
+  muted: "#5f7669",
+  live: "#3b82f6",
+};
 
-function createDivIcon(color: string, selected: boolean): L.DivIcon {
-  const outer = selected
-    ? `<circle cx="18" cy="18" r="17" fill="none" stroke="white" stroke-width="2.5"/>`
+function buildDivIcon(
+  station: GeoportalStationMapItem,
+  selected: boolean
+): L.DivIcon {
+  const visitas = station.visitas_total;
+  const isLive = station.is_live;
+  const r = Math.max(11, Math.min(26, 11 + visitas * 0.55));
+  const size = (r + (isLive ? 10 : 6)) * 2;
+  const c = size / 2;
+
+  const baseColor =
+    station.status === StationStatus.offline
+      ? COLORS.muted
+      : isLive
+        ? COLORS.live
+        : station.open_alerts_count > 0
+          ? COLORS.amber
+          : COLORS.forest;
+
+  const noIdFrac = visitas > 0 ? station.visitas_sin_identificar / visitas : 0;
+  const circumference = 2 * Math.PI * r;
+  const amberArc = circumference * noIdFrac;
+
+  const pulse = isLive
+    ? `<circle cx="${c}" cy="${c}" r="${r + 3}" fill="none" stroke="${COLORS.live}" stroke-width="2" class="wt-live-pulse"/>`
     : "";
-  const html = `
-    <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="18" r="16" fill="${color}" fill-opacity="0.18" stroke="${color}" stroke-width="2"/>
-      <circle cx="18" cy="18" r="6" fill="${color}"/>
-      ${outer}
-    </svg>`;
-  return L.divIcon({
-    className: "",
-    html,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-  });
+
+  const ring = `
+    ${pulse}
+    <circle cx="${c}" cy="${c}" r="${r}" fill="${baseColor}" fill-opacity="0.85"
+      stroke="${selected ? "#fff" : "#16241d"}" stroke-width="${selected ? 3 : 2}"/>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${COLORS.amber}" stroke-width="4"
+      stroke-dasharray="${amberArc.toFixed(1)} ${circumference.toFixed(1)}" transform="rotate(-90 ${c} ${c})" stroke-linecap="round"/>
+    <text x="${c}" y="${c + 4}" text-anchor="middle" fill="#fff"
+      font-family="'Space Grotesk',sans-serif" font-size="${r > 16 ? 13 : 11}" font-weight="600">${visitas}</text>
+  `;
+
+  const html = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${ring}</svg>`;
+  return L.divIcon({ html, className: "marker-ring", iconSize: [size, size], iconAnchor: [c, c] });
 }
 
 interface StationMarkerProps {
-  station: GeoportalStationRead;
+  station: GeoportalStationMapItem;
   selected: boolean;
-  onClick: () => void;
+  onSelectDetail: (station: GeoportalStationMapItem) => void;
 }
 
-export default function StationMarker({ station, selected, onClick }: StationMarkerProps) {
+export default function StationMarker({
+  station,
+  selected,
+  onSelectDetail,
+}: StationMarkerProps) {
+  const map = useMap();
+
   const icon = useMemo(
-    () => createDivIcon(effectiveColor(station), selected),
+    () => buildDivIcon(station, selected),
+    // Rebuild when these fields change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [station.status, station.open_alerts_count, selected]
+    [
+      station.status,
+      station.open_alerts_count,
+      station.is_live,
+      station.visitas_total,
+      station.visitas_sin_identificar,
+      selected,
+    ]
   );
 
+  function handleSelectDetail() {
+    map.closePopup();
+    onSelectDetail(station);
+  }
+
   return (
-    <Marker
-      position={[station.latitude, station.longitude]}
-      icon={icon}
-      eventHandlers={{ click: onClick }}
-    >
-      <Tooltip direction="top" offset={[0, -10]}>
-        <strong>{station.station_code}</strong>
-        <br />
-        {station.station_name}
-      </Tooltip>
+    <Marker position={[station.latitude, station.longitude]} icon={icon}>
+      <Popup className="wt-leaflet-popup" maxWidth={280}>
+        <StationPopup station={station} onSelectDetail={handleSelectDetail} />
+      </Popup>
     </Marker>
   );
 }

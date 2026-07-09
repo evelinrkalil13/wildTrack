@@ -1,3 +1,4 @@
+import enum as _enum
 from datetime import datetime
 from typing import Optional
 
@@ -32,7 +33,8 @@ class GeoportalRecentEvent(BaseModel):
     media_urls: list[str] = []
 
 
-class GeoportalStationRead(BaseModel):
+class GeoportalStationMapItem(BaseModel):
+    """Lean — only map and sidebar data. Kept small and stable."""
     station_id: str
     station_code: str
     station_name: str
@@ -41,7 +43,185 @@ class GeoportalStationRead(BaseModel):
     longitude: float
     zone_id: str
     zone_name: str
-    device: Optional[GeoportalDeviceInfo]
-    latest_telemetry: Optional[GeoportalTelemetry]
-    recent_events: list[GeoportalRecentEvent]
-    open_alerts_count: int
+    zone_color: str = "#52b788"
+    device_status: Optional[DeviceStatus] = None
+    open_alerts_count: int = 0
+    is_live: bool = False
+    visitas_total: int = 0
+    visitas_identificadas: int = 0
+    visitas_sin_identificar: int = 0
+
+
+# Backward-compat alias used by existing tests
+GeoportalStationRead = GeoportalStationMapItem
+
+
+class GeoportalStationDetail(GeoportalStationMapItem):
+    """Full detail fetched on-demand when a station is selected."""
+    food_type: Optional[str] = None
+    device: Optional[GeoportalDeviceInfo] = None
+    latest_telemetry: Optional[GeoportalTelemetry] = None
+    peso_promedio_g: Optional[float] = None
+    peso_mediana_g: Optional[float] = None
+    visitas_por_dia: list[int] = []  # 7 values Mon(0)–Sun(6)
+    recent_events: list[GeoportalRecentEvent] = []
+
+
+# ── GEO-4: Animals and Activity Feed ─────────────────────────────────────────
+
+class ActivityItemType(str, _enum.Enum):
+    feeding = "feeding"
+    rfid_read = "rfid_read"
+    photo = "photo"
+    alert = "alert"
+    telemetry = "telemetry"
+
+
+class ActivityItem(BaseModel):
+    item_type: ActivityItemType
+    timestamp: datetime
+    description: str
+    rfid_tag: Optional[str] = None
+    animal_species: Optional[str] = None
+    media_urls: list[str] = []
+    severity: Optional[str] = None  # "info" | "warning" | "critical"
+
+
+class GeoportalAnimalRead(BaseModel):
+    animal_id: str
+    rfid_tag: str
+    species: str
+    sex: str
+    estimated_age: Optional[str] = None
+    notes: Optional[str] = None
+    registered_at: datetime
+    total_visits: int = 0
+    last_visit: Optional[datetime] = None
+    avg_consumed_g: Optional[float] = None
+
+
+# ── GEO-5: Global Stats ───────────────────────────────────────────────────────
+
+class StationStatRow(BaseModel):
+    station_id: str
+    station_code: str
+    station_name: str
+    zone_id: str
+    zone_name: str
+    zone_color: str
+    visitas: int
+    identificados: int
+    sin_identificar: int
+    peso_promedio_g: Optional[float] = None
+    status: StationStatus
+    open_alerts: int
+
+
+class SectorStatRow(BaseModel):
+    zone_id: str
+    zone_name: str
+    zone_color: str
+    num_estaciones: int
+    visitas: int
+    identificados: int
+    sin_identificar: int
+    pct_sin_id: float
+    peso_promedio_g: Optional[float] = None
+    en_alerta: int
+
+
+class AnimalMovement(BaseModel):
+    animal_id: str
+    rfid_tag: str
+    species: str
+    sex: str
+    distinct_stations: int
+    path: list[str]        # station_ids deduped-consecutive chronological
+    path_names: list[str]  # human-readable station names
+
+
+class GeoportalStatsResponse(BaseModel):
+    time_filter: str
+    total_estaciones: int
+    total_sectores: int
+    total_animales_con_chip: int
+    total_visitas: int
+    avistamientos_sin_chip: int
+    estaciones: list[StationStatRow]
+    sectores: list[SectorStatRow]
+    animales_con_chip: list[AnimalMovement]
+
+
+# ── GEO-6: Animal Feeding Dashboard ──────────────────────────────────────────
+
+class FeedingEvent(BaseModel):
+    event_id: str
+    station_id: str
+    station_name: str
+    timestamp: datetime
+    consumed_g: Optional[float] = None
+    temperature_c: Optional[float] = None
+    humidity_pct: Optional[float] = None
+    media_urls: list[str] = []
+
+
+class FeederRankItem(BaseModel):
+    station_id: str
+    station_name: str
+    visits: int
+    pct: float
+    is_primary: bool
+
+
+class TraceStop(BaseModel):
+    station_id: str
+    station_name: str
+    lat: float
+    lng: float
+    timestamp: datetime
+
+
+# ── GEO-7: Station Visits Modal ───────────────────────────────────────────────
+
+class StationEventDetail(BaseModel):
+    event_id: str
+    timestamp: datetime
+    rfid_tag: Optional[str] = None
+    animal_id: Optional[str] = None
+    animal_species: Optional[str] = None
+    animal_sex: Optional[str] = None
+    consumed_g: Optional[float] = None
+    temperature_c: Optional[float] = None
+    humidity_pct: Optional[float] = None
+    media_urls: list[str] = []
+    is_identified: bool = False
+
+
+class StationEventsResponse(BaseModel):
+    station_id: str
+    station_name: str
+    total: int          # matches current filter (for pagination)
+    identificadas: int  # always full count regardless of filter
+    sin_identificar: int
+    page: int
+    pages: int
+    events: list[StationEventDetail]
+
+
+class AnimalHistoryResponse(BaseModel):
+    animal_id: str
+    rfid_tag: str
+    species: str
+    sex: str
+    estimated_age: Optional[str] = None
+    notes: Optional[str] = None
+    total_alimentaciones: int
+    total_estaciones: int
+    dias_activo: int
+    peso_promedio_g: Optional[float] = None
+    actividad_semanal: list[int]  # 7 values Mon(0)–Sun(6)
+    feeder_ranking: list[FeederRankItem]
+    timeline: list[FeedingEvent]  # latest 50
+    trace_path: list[TraceStop]
+    insight_text: str
+    time_filter: str

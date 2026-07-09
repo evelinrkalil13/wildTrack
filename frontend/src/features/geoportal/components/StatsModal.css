@@ -1,0 +1,311 @@
+/* ── GEO-5 Stats Modal — dark theme matching reference geoportal ─────────── */
+
+.wt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.wt-modal-stats {
+  background: #16241d;
+  border: 1px solid #2a4035;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 82vh;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #e8f0ea;
+}
+
+/* ── Head ── */
+.wt-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #2a4035;
+  flex-shrink: 0;
+}
+
+.wt-modal-eyebrow {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 11px;
+  color: #e08a1e;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.wt-modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #e8f0ea;
+}
+
+.wt-modal-subtitle {
+  font-size: 12px;
+  color: #8fada0;
+  margin-top: 4px;
+}
+
+.wt-modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #2a4035;
+  color: #8fada0;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.13s, background 0.13s;
+}
+.wt-modal-close:hover { color: #e8f0ea; background: rgba(255, 255, 255, 0.1); }
+
+/* ── Body ── */
+.wt-modal-body {
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #2a4035 transparent;
+}
+
+/* ── Tab chips ── */
+.wt-modal-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.wt-modal-chip {
+  flex: 1;
+  font-size: 11.5px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid #2a4035;
+  color: #8fada0;
+  background: transparent;
+  transition: all 0.12s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wt-modal-chip[data-active="true"] {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+.wt-modal-chip:hover { border-color: #52b788; }
+
+/* ── Table (shared by Estaciones and Sectores tabs) ── */
+.wt-stats-table-wrap {
+  border: 1px solid #2a4035;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.wt-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.wt-stats-table th {
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+  padding: 8px 10px;
+  color: #8fada0;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.3px;
+  font-size: 11px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wt-stats-table td {
+  padding: 8px 10px;
+  border-top: 1px solid #2a4035;
+  color: #d4e8da;
+  vertical-align: middle;
+}
+
+.wt-stats-table tr:hover td { background: rgba(255, 255, 255, 0.025); }
+
+.wt-td-mono {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 10.5px;
+  color: #e08a1e;
+}
+
+.wt-td-muted { color: #8fada0; font-size: 11px; margin-top: 2px; }
+
+.wt-td-green { color: #52b788; font-weight: 600; }
+.wt-td-amber { color: #e08a1e; }
+
+.wt-zone-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px currentColor;
+}
+
+/* ── KPI row (Individuos tab) ── */
+.wt-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.wt-kpi {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2a4035;
+  border-radius: 10px;
+  padding: 13px 14px;
+}
+
+.wt-kpi-v {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #52b788;
+  line-height: 1;
+}
+
+.wt-kpi-k {
+  font-size: 10px;
+  color: #8fada0;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Section label ── */
+.wt-modal-section-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #8fada0;
+  margin: 18px 0 10px;
+}
+
+/* ── Mover rows (animal movement paths) ── */
+.wt-mover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wt-mover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a4035;
+  border-radius: 10px;
+}
+
+.wt-mover-info { min-width: 0; flex: 1; }
+
+.wt-mover-id {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 10.5px;
+  color: #52b788;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wt-mover-badge {
+  font-size: 9px;
+  background: rgba(224, 138, 30, 0.18);
+  color: #e08a1e;
+  border: 1px solid #e08a1e;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.wt-mover-name {
+  font-size: 12.5px;
+  color: #e8f0ea;
+  margin-top: 2px;
+}
+
+.wt-mover-path {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 10.5px;
+  color: #8fada0;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wt-btn-trace {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #e08a1e;
+  background: rgba(224, 138, 30, 0.12);
+  border: 1px solid #e08a1e;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.13s;
+}
+.wt-btn-trace:hover { background: rgba(224, 138, 30, 0.24); }
+
+/* ── Empty states ── */
+.wt-modal-empty {
+  text-align: center;
+  color: #5f7669;
+  font-size: 13px;
+  padding: 40px 20px;
+  line-height: 1.7;
+}
+
+/* ── Note text ── */
+.wt-modal-note {
+  font-size: 11.5px;
+  color: #5f7669;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #2a4035;
+  border-radius: 8px;
+}
+
+/* ── Skeleton ── */
+@keyframes wtModalShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.wt-modal-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #1e3428 25%, #26413a 50%, #1e3428 75%);
+  background-size: 200% auto;
+  animation: wtModalShimmer 1.4s linear infinite;
+}

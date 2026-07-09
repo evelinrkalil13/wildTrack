@@ -1,344 +1,426 @@
-import {
-  Box,
-  Chip,
-  Divider,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import RouterIcon from "@mui/icons-material/Router";
-import ThermostatIcon from "@mui/icons-material/Thermostat";
-import RssFeedIcon from "@mui/icons-material/RssFeed";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import type { GeoportalStationRead } from "../api/geoportal.types";
-import { DeviceStatus, StationStatus } from "@/api/types/enums";
+import "./StationDetailPanel.css";
+import "./ExportModal.css";
+import type {
+  ActivityItem,
+  ActivityItemType,
+  GeoportalAnimalRead,
+  GeoportalStationMapItem,
+  TimePeriod,
+} from "../api/geoportal.types";
+import { exportRecentEventsCsv } from "../lib/exportData";
+import { StationStatus } from "@/api/types/enums";
+import { useStationDetail } from "../hooks/useStationDetail";
+import { useStationAnimals } from "../hooks/useStationAnimals";
+import { useStationActivity } from "../hooks/useStationActivity";
 
-const STATUS_LABELS: Record<StationStatus, string> = {
-  [StationStatus.active]:      "Activa",
-  [StationStatus.inactive]:    "Inactiva",
-  [StationStatus.maintenance]: "Mantenimiento",
-  [StationStatus.offline]:     "Desconectada",
+const DIAS = ["L", "M", "X", "J", "V", "S", "D"];
+
+const ACTIVITY_ICON: Record<ActivityItemType, string> = {
+  feeding: "🌿",
+  rfid_read: "📡",
+  photo: "📷",
+  alert: "⚠️",
+  telemetry: "📶",
 };
 
-const STATUS_COLORS: Record<StationStatus, "success" | "warning" | "default" | "error"> = {
-  [StationStatus.active]:      "success",
-  [StationStatus.maintenance]: "warning",
-  [StationStatus.offline]:     "default",
-  [StationStatus.inactive]:    "default",
+const SEX_LABEL: Record<string, string> = {
+  male: "♂ Macho",
+  female: "♀ Hembra",
+  M: "♂ Macho",
+  F: "♀ Hembra",
+  unknown: "? Desc.",
+  desconocido: "? Desc.",
 };
 
-const DEVICE_STATUS_LABELS: Record<DeviceStatus, string> = {
-  [DeviceStatus.online]:     "En línea",
-  [DeviceStatus.offline]:    "Desconectado",
-  [DeviceStatus.unassigned]: "Sin asignar",
+const STATUS_LABEL: Record<StationStatus, string> = {
+  [StationStatus.active]: "en línea",
+  [StationStatus.inactive]: "inactiva",
+  [StationStatus.maintenance]: "en mantenimiento",
+  [StationStatus.offline]: "sin reportar",
 };
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+function statusDotKey(
+  status: StationStatus,
+  openAlerts: number
+): "online" | "alert" | "offline" {
+  if (status === StationStatus.active && openAlerts === 0) return "online";
+  if (openAlerts > 0) return "alert";
+  return "offline";
 }
 
-function formatCoords(lat: number, lng: number): string {
-  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+function timeAgo(iso: string | null): string {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "hace un momento";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  return `hace ${Math.floor(h / 24)} días`;
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleString("es-CO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 interface StationDetailPanelProps {
-  station: GeoportalStationRead;
+  stationId: string;
+  stationSummary: GeoportalStationMapItem;
+  timePeriod: TimePeriod;
   onClose: () => void;
+  onOpenHistory: (animalId: string) => void;
+  onOpenVisits?: () => void;
 }
 
-export default function StationDetailPanel({ station, onClose }: StationDetailPanelProps) {
+export default function StationDetailPanel({
+  stationId,
+  stationSummary,
+  timePeriod,
+  onClose,
+  onOpenHistory,
+  onOpenVisits,
+}: StationDetailPanelProps) {
+  const { data: detail, isPending: detailPending } = useStationDetail(
+    stationId,
+    timePeriod
+  );
+  const { data: animals = [], isPending: animalsPending } = useStationAnimals(
+    stationId,
+    timePeriod
+  );
+  const { data: activity = [], isPending: activityPending } =
+    useStationActivity(stationId);
+
+  const station = detail ?? stationSummary;
+  const dotKey = statusDotKey(station.status, station.open_alerts_count);
+
+  // Last visit from first activity item
+  const lastVisitIso =
+    activity.find((a) => a.item_type === "feeding" || a.item_type === "rfid_read")
+      ?.timestamp ?? null;
+
+  // Frequency chart
+  const visitas = detail?.visitas_por_dia ?? [0, 0, 0, 0, 0, 0, 0];
+  const peak = Math.max(...visitas);
+
   return (
-    <Box
-      sx={{
-        width: 340,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "background.paper",
-        borderLeft: "1px solid",
-        borderColor: "divider",
-        overflow: "auto",
-        zIndex: 1,
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          px: 2,
-          py: 1.5,
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 1,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="caption"
-            sx={{ fontFamily: "monospace", color: "primary.main", fontWeight: 600 }}
-          >
-            {station.station_code}
-          </Typography>
-          <Typography variant="subtitle1" fontWeight={700} noWrap>
-            {station.station_name}
-          </Typography>
-        </Box>
-        <IconButton size="small" onClick={onClose} sx={{ mt: 0.25 }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
+    <div className="wt-detail">
+      {/* ── Head ── */}
+      <div className="wt-detail-head">
+        <div className="wt-detail-head-actions">
+          {detail?.recent_events && detail.recent_events.length > 0 && (
+            <button
+              className="btn-download-inline"
+              title="Descargar eventos recientes (CSV)"
+              aria-label="Descargar CSV"
+              onClick={() =>
+                exportRecentEventsCsv(detail.recent_events, stationId)
+              }
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-6 2h12v2H6v-2z" />
+              </svg>
+              CSV
+            </button>
+          )}
+          <button className="wt-detail-close" onClick={onClose} aria-label="Cerrar panel">
+            ×
+          </button>
+        </div>
+        <div className="wt-detail-eyebrow">
+          {stationSummary.station_code}
+          {station.is_live && (
+            <span className="wt-detail-live-badge" style={{ marginLeft: 8 }}>
+              📡 EN VIVO
+            </span>
+          )}
+        </div>
+        <h2 className="wt-detail-title">{stationSummary.station_name}</h2>
+        <div className="wt-detail-meta">
+          <span
+            className="wt-detail-status-dot"
+            data-s={dotKey}
+          />
+          <span>
+            Última visita {timeAgo(lastVisitIso)} · {STATUS_LABEL[station.status]}
+          </span>
+        </div>
+      </div>
 
-      <Box sx={{ flex: 1, overflow: "auto" }}>
-        {/* Station Info */}
-        <SectionBlock>
-          <Stack spacing={0.75}>
-            <Row label="Estado">
-              <Chip
-                label={STATUS_LABELS[station.status]}
-                color={STATUS_COLORS[station.status]}
-                size="small"
-              />
-            </Row>
-            <Row label="Zona">{station.zone_name}</Row>
-            <Row label="Coordenadas">
-              <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.78rem" }}>
-                {formatCoords(station.latitude, station.longitude)}
-              </Typography>
-            </Row>
-            {station.open_alerts_count > 0 && (
-              <Box
-                sx={{
-                  mt: 0.5,
-                  px: 1.5,
-                  py: 0.75,
-                  bgcolor: "warning.main",
-                  borderRadius: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
+      {/* ── Body ── */}
+      <div className="wt-detail-body">
+
+        {/* Alerts banner */}
+        {station.open_alerts_count > 0 && (
+          <div className="wt-alerts-banner">
+            <span>⚠️</span>
+            <span>
+              {station.open_alerts_count}{" "}
+              {station.open_alerts_count === 1 ? "alerta abierta" : "alertas abiertas"}
+            </span>
+          </div>
+        )}
+
+        {/* Zona */}
+        <span
+          className="wt-zone-chip"
+          style={{
+            borderColor: stationSummary.zone_color,
+            color: stationSummary.zone_color,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: stationSummary.zone_color,
+              flexShrink: 0,
+              display: "inline-block",
+            }}
+          />
+          {stationSummary.zone_name}
+        </span>
+
+        {/* Stats grid */}
+        <div className="wt-section-label" style={{ marginTop: 16 }}>Estadísticas</div>
+        {detailPending && !detail ? (
+          <SkeletonBlock />
+        ) : (
+          <>
+            <div className="wt-stats-grid">
+              <div
+                className="wt-stat"
+                onClick={onOpenVisits}
+                style={
+                  onOpenVisits
+                    ? { cursor: "pointer", outline: "1px solid transparent" }
+                    : undefined
+                }
+                title={onOpenVisits ? "Ver listado de visitas" : undefined}
               >
-                <NotificationsActiveIcon fontSize="small" sx={{ color: "warning.contrastText" }} />
-                <Typography variant="body2" fontWeight={600} sx={{ color: "warning.contrastText" }}>
-                  {station.open_alerts_count}{" "}
-                  {station.open_alerts_count === 1 ? "alerta abierta" : "alertas abiertas"}
-                </Typography>
-              </Box>
-            )}
-          </Stack>
-        </SectionBlock>
-
-        <Divider />
-
-        {/* Device */}
-        <SectionBlock
-          icon={<RouterIcon fontSize="small" sx={{ color: "text.secondary" }} />}
-          title="Dispositivo"
-        >
-          {station.device ? (
-            <Stack spacing={0.75}>
-              <Row label="Serial">
-                <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.82rem" }}>
-                  {station.device.serial_number}
-                </Typography>
-              </Row>
-              <Row label="Estado">
-                <Chip
-                  label={DEVICE_STATUS_LABELS[station.device.status]}
-                  color={station.device.status === DeviceStatus.online ? "success" : "default"}
-                  size="small"
-                />
-              </Row>
-              <Row label="Última conexión">{formatDate(station.device.last_seen)}</Row>
-            </Stack>
-          ) : (
-            <EmptyHint text="Sin dispositivo asignado" />
-          )}
-        </SectionBlock>
-
-        <Divider />
-
-        {/* Telemetry */}
-        <SectionBlock
-          icon={<ThermostatIcon fontSize="small" sx={{ color: "text.secondary" }} />}
-          title="Última telemetría"
-        >
-          {station.latest_telemetry ? (
-            <Stack spacing={0.75}>
-              {station.latest_telemetry.temperature_c !== null && (
-                <Row label="Temperatura">{station.latest_telemetry.temperature_c?.toFixed(1)} °C</Row>
-              )}
-              {station.latest_telemetry.humidity_pct !== null && (
-                <Row label="Humedad">{station.latest_telemetry.humidity_pct?.toFixed(1)} %</Row>
-              )}
-              {station.latest_telemetry.wifi_rssi_dbm !== null && (
-                <Row label="RSSI Wi-Fi">{station.latest_telemetry.wifi_rssi_dbm} dBm</Row>
-              )}
-              {station.latest_telemetry.firmware_version && (
-                <Row label="Firmware">
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.78rem" }}>
-                    {station.latest_telemetry.firmware_version}
-                  </Typography>
-                </Row>
-              )}
-              <Row label="Registrado">{formatDate(station.latest_telemetry.timestamp)}</Row>
-            </Stack>
-          ) : (
-            <EmptyHint text="Sin datos de telemetría" />
-          )}
-        </SectionBlock>
-
-        <Divider />
-
-        {/* Recent Events */}
-        <SectionBlock
-          icon={<RssFeedIcon fontSize="small" sx={{ color: "text.secondary" }} />}
-          title="Eventos recientes"
-        >
-          {station.recent_events.length > 0 ? (
-            <Stack spacing={1}>
-              {station.recent_events.map((evt, idx) => (
-                <Box
-                  key={evt.event_id || idx}
-                  sx={{
-                    p: 1,
-                    bgcolor: "background.default",
-                    borderRadius: 1.5,
-                    border: "1px solid",
-                    borderColor: "divider",
-                  }}
+                <div
+                  className="v"
+                  style={onOpenVisits ? { color: "#52b788" } : undefined}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                    {formatDate(evt.timestamp)}
-                  </Typography>
-                  {evt.rfid_tag && (
-                    <Row label="RFID">
-                      <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.78rem" }}>
-                        {evt.rfid_tag}
-                      </Typography>
-                    </Row>
-                  )}
-                  {evt.consumed_g !== null && evt.consumed_g !== undefined && (
-                    <Row label="Consumo">{evt.consumed_g.toFixed(1)} g</Row>
-                  )}
-                  {evt.temperature_c !== null && evt.temperature_c !== undefined && (
-                    <Row label="Temperatura">{evt.temperature_c.toFixed(1)} °C</Row>
-                  )}
-                  {evt.humidity_pct !== null && evt.humidity_pct !== undefined && (
-                    <Row label="Humedad">{evt.humidity_pct.toFixed(1)} %</Row>
-                  )}
-                  {evt.media_urls.length > 0 && (
-                    <Box sx={{ mt: 0.75 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                        Fotos ({evt.media_urls.length})
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-                        {evt.media_urls.slice(0, 4).map((url, i) => (
-                          <Box
-                            key={i}
-                            component="img"
-                            src={url}
-                            alt={`Foto ${i + 1}`}
-                            onClick={() => window.open(url, "_blank")}
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).style.display = "none";
-                            }}
-                            sx={{
-                              width: 72,
-                              height: 72,
-                              objectFit: "cover",
-                              borderRadius: 1,
-                              cursor: "pointer",
-                              border: "1px solid",
-                              borderColor: "divider",
-                              "&:hover": { opacity: 0.85, borderColor: "primary.main" },
-                            }}
-                          />
-                        ))}
-                        {evt.media_urls.length > 4 && (
-                          <Box
-                            sx={{
-                              width: 72,
-                              height: 72,
-                              borderRadius: 1,
-                              border: "1px solid",
-                              borderColor: "divider",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              bgcolor: "background.paper",
-                              cursor: "pointer",
-                            }}
-                            onClick={() => window.open(evt.media_urls[4], "_blank")}
-                          >
-                            <Typography variant="caption" color="text.secondary">
-                              +{evt.media_urls.length - 4}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              ))}
-            </Stack>
-          ) : (
-            <EmptyHint text="Sin eventos registrados" />
-          )}
-        </SectionBlock>
-      </Box>
-    </Box>
+                  {station.visitas_total}
+                </div>
+                <div className="k">Visitas ↗</div>
+              </div>
+              <div className="wt-stat peso">
+                <div className="v">
+                  {detail?.peso_promedio_g != null
+                    ? `${detail.peso_promedio_g} g`
+                    : "—"}
+                </div>
+                <div className="k">Peso prom.</div>
+              </div>
+              <div className="wt-stat peso">
+                <div className="v">
+                  {detail?.peso_mediana_g != null
+                    ? `${detail.peso_mediana_g} g`
+                    : "—"}
+                </div>
+                <div className="k">Mediana</div>
+              </div>
+            </div>
+            <div className="wt-split">
+              <div className="wt-stat id">
+                <div className="v">{station.visitas_identificadas}</div>
+                <div className="k">Identificados</div>
+              </div>
+              <div className="wt-stat noid">
+                <div className="v">{station.visitas_sin_identificar}</div>
+                <div className="k">Sin ID</div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Frequency chart */}
+        <div className="wt-section-label">Frecuencia por día</div>
+        {detailPending && !detail ? (
+          <SkeletonBlock height={88} />
+        ) : (
+          <div className="wt-bars" role="img" aria-label="Visitas por día de la semana">
+            {visitas.map((v, i) => (
+              <div
+                className="wt-bar-col"
+                key={i}
+                data-peak={String(v === peak && peak > 0)}
+              >
+                <div
+                  className="wt-bar"
+                  style={{ height: `${peak > 0 ? (v / peak) * 100 : 0}%` }}
+                  title={`${v} visitas`}
+                />
+                <div className="wt-bar-lbl">{DIAS[i]}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Telemetry inline */}
+        {(detail?.latest_telemetry || (!detailPending && detail)) && (
+          <>
+            <div className="wt-section-label">Última telemetría</div>
+            {detailPending && !detail ? (
+              <SkeletonBlock />
+            ) : detail?.latest_telemetry ? (
+              <div style={{ border: "1px solid #2a4035", borderRadius: 10, padding: "4px 12px" }}>
+                {detail.latest_telemetry.temperature_c != null && (
+                  <TRow label="Temperatura" value={`${detail.latest_telemetry.temperature_c.toFixed(1)} °C`} />
+                )}
+                {detail.latest_telemetry.humidity_pct != null && (
+                  <TRow label="Humedad" value={`${detail.latest_telemetry.humidity_pct.toFixed(1)} %`} />
+                )}
+                {detail.latest_telemetry.wifi_rssi_dbm != null && (
+                  <TRow label="RSSI Wi-Fi" value={`${detail.latest_telemetry.wifi_rssi_dbm} dBm`} />
+                )}
+                {detail.latest_telemetry.firmware_version && (
+                  <TRow label="Firmware" value={detail.latest_telemetry.firmware_version} mono />
+                )}
+                <TRow label="Registrado" value={formatTime(detail.latest_telemetry.timestamp)} />
+              </div>
+            ) : null}
+          </>
+        )}
+
+        {/* Animals / Individuos */}
+        <div className="wt-section-label">
+          <span>Individuos con chip ({animals.length})</span>
+        </div>
+        {animalsPending ? (
+          <SkeletonBlock />
+        ) : animals.length === 0 ? (
+          <div className="wt-ind-empty">Ningún individuo registrado en este periodo.</div>
+        ) : (
+          <div className="wt-ind-list">
+            {animals.map((animal) => (
+              <AnimalCard
+                key={animal.animal_id}
+                animal={animal}
+                onOpenHistory={onOpenHistory}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Activity feed */}
+        <div className="wt-section-label">Actividad reciente</div>
+        {activityPending ? (
+          <>
+            <SkeletonBlock height={50} />
+            <SkeletonBlock height={50} style={{ marginTop: 6 }} />
+          </>
+        ) : activity.length === 0 ? (
+          <div className="wt-activity-empty">Sin actividad registrada.</div>
+        ) : (
+          <div className="wt-activity-list">
+            {activity.map((item, i) => (
+              <ActivityFeedItem key={i} item={item} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-function SectionBlock({
-  icon,
-  title,
-  children,
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function AnimalCard({
+  animal,
+  onOpenHistory,
 }: {
-  icon?: React.ReactNode;
-  title?: string;
-  children: React.ReactNode;
+  animal: GeoportalAnimalRead;
+  onOpenHistory: (animalId: string) => void;
 }) {
   return (
-    <Box sx={{ px: 2, py: 1.5 }}>
-      {title && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
-          {icon}
-          <Typography variant="caption" sx={{ textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600, color: "text.secondary" }}>
-            {title}
-          </Typography>
-        </Box>
+    <div className="wt-ind-card">
+      <div className="wt-ind-header">
+        <span className="wt-ind-id">{animal.animal_id.slice(0, 8).toUpperCase()}</span>
+        <span className="wt-ind-sex">{SEX_LABEL[animal.sex] ?? animal.sex}</span>
+      </div>
+      <div className="wt-ind-name">{animal.species}</div>
+      {animal.estimated_age && (
+        <div className="wt-ind-species">{animal.estimated_age}</div>
       )}
-      {children}
-    </Box>
+      <div className="wt-ind-chip">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+          <path d="M7 2v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2v2h2v-2h6v2h2v-2h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm0 6h10v8H7z" />
+        </svg>
+        {animal.rfid_tag}
+      </div>
+      <div className="wt-ind-meta">
+        {animal.total_visits} visitas
+        {animal.avg_consumed_g != null && ` · ${animal.avg_consumed_g} g prom.`}
+        {animal.last_visit && ` · último ${timeAgo(animal.last_visit)}`}
+      </div>
+      {animal.notes && <div className="wt-ind-notes">{animal.notes}</div>}
+      <button
+        className="wt-ind-history-btn"
+        onClick={() => onOpenHistory(animal.animal_id)}
+      >
+        Ver historial →
+      </button>
+    </div>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function ActivityFeedItem({ item }: { item: ActivityItem }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, justifyContent: "space-between" }}>
-      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-        {label}
-      </Typography>
-      <Box sx={{ textAlign: "right" }}>
-        {typeof children === "string" || typeof children === "number" ? (
-          <Typography variant="body2">{children}</Typography>
-        ) : (
-          children
+    <div className="wt-activity-item">
+      <div className="wt-activity-icon" data-type={item.item_type}>
+        {ACTIVITY_ICON[item.item_type] ?? "•"}
+      </div>
+      <div className="wt-activity-body">
+        <div className="wt-activity-desc">{item.description}</div>
+        {item.rfid_tag && (
+          <div className="wt-activity-rfid">🏷 {item.rfid_tag}</div>
         )}
-      </Box>
-    </Box>
+        <div className="wt-activity-time">{formatTime(item.timestamp)}</div>
+      </div>
+    </div>
   );
 }
 
-function EmptyHint({ text }: { text: string }) {
+function TRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
-    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-      {text}
-    </Typography>
+    <div className="wt-telemetry-row">
+      <span className="wt-telemetry-label">{label}</span>
+      <span
+        className="wt-telemetry-value"
+        style={mono ? { fontFamily: "'Space Grotesk', monospace" } : undefined}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function SkeletonBlock({
+  height = 32,
+  style,
+}: {
+  height?: number;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className="wt-skeleton"
+      style={{ height, borderRadius: 8, marginBottom: 4, ...style }}
+    />
   );
 }
