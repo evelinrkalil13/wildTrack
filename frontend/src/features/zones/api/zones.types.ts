@@ -7,6 +7,7 @@ export interface ZoneRead {
   altitude: number | null;
   latitude: number;
   longitude: number;
+  color: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +30,7 @@ export interface ZoneUpdate {
   altitude?: number;
   latitude?: number;
   longitude?: number;
+  color?: string;
 }
 
 export interface ZoneListResponse {

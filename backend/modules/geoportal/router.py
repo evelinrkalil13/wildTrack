@@ -6,6 +6,7 @@ from infrastructure.postgres import get_db_session
 from modules.geoportal.schemas import (
     ActivityItem,
     AnimalHistoryResponse,
+    DarwinCoreResponse,
     GeoportalAnimalRead,
     GeoportalStationDetail,
     GeoportalStationMapItem,
@@ -107,3 +108,18 @@ async def get_animal_history(
             detail="Animal not found or has no RFID tag",
         )
     return history
+
+
+@router.get("/animals/{animal_id}/darwin-core", response_model=DarwinCoreResponse)
+async def get_darwin_core(
+    animal_id: str,
+    session: AsyncSession = Depends(get_db_session),
+    _: User = Depends(get_current_user),
+) -> DarwinCoreResponse:
+    result = await GeoportalService.get_darwin_core(session, animal_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Animal not found",
+        )
+    return result

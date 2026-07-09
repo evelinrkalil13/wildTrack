@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+import re
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from shared.pagination import PaginatedResponse
@@ -33,6 +35,7 @@ class ZoneUpdate(BaseModel):
     altitude: Optional[float] = None
     latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
     longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    color: Optional[str] = Field(None, max_length=7)
 
     @field_validator("name")
     @classmethod
@@ -41,6 +44,13 @@ class ZoneUpdate(BaseModel):
             v = v.strip()
             if len(v) < 2:
                 raise ValueError("Name must be at least 2 characters after trim")
+        return v
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
+            raise ValueError("Color must be a valid hex color (e.g. #52b788)")
         return v
 
 
@@ -55,6 +65,7 @@ class ZoneRead(BaseModel):
     altitude: Optional[float]
     latitude: float
     longitude: float
+    color: str
     created_at: datetime
     updated_at: datetime
 

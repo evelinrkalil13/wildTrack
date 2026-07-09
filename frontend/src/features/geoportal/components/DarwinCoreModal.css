@@ -1,0 +1,338 @@
+/* ── Overlay ── */
+.wt-dc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(8, 16, 12, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── Modal shell ── */
+.wt-dc-modal {
+  background: #16241d;
+  border: 1px solid #2a4035;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  font-family: "Inter", system-ui, sans-serif;
+  color: #e8f0ea;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.wt-dc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #2a4035;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.wt-dc-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wt-dc-eyebrow {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #52b788;
+}
+
+.wt-dc-species-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  font-style: italic;
+  color: #e8f0ea;
+  line-height: 1.25;
+}
+
+.wt-dc-vernacular {
+  font-size: 11.5px;
+  color: #8aa395;
+  font-style: normal;
+}
+
+.wt-dc-close {
+  background: none;
+  border: none;
+  color: #8aa395;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.13s;
+}
+.wt-dc-close:hover { color: #e8f0ea; }
+
+/* ── Status badge ── */
+.wt-dc-status-bar {
+  padding: 6px 16px;
+  border-bottom: 1px solid #2a4035;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.wt-dc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.wt-dc-badge[data-status="ok"] {
+  color: #52b788;
+  border-color: #52b788;
+  background: rgba(82, 183, 136, 0.08);
+}
+.wt-dc-badge[data-status="fuzzy_match"] {
+  color: #f0a832;
+  border-color: #f0a832;
+  background: rgba(240, 168, 50, 0.08);
+}
+.wt-dc-badge[data-status="not_found"] {
+  color: #8aa395;
+  border-color: #4a6358;
+  background: rgba(74, 99, 88, 0.15);
+}
+.wt-dc-badge[data-status="unavailable"] {
+  color: #e07070;
+  border-color: #e07070;
+  background: rgba(224, 112, 112, 0.08);
+}
+
+.wt-dc-status-hint {
+  color: #6b8a7a;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+/* ── Scrollable body ── */
+.wt-dc-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 10px 0 4px;
+}
+
+/* ── Section ── */
+.wt-dc-section {
+  padding: 8px 16px 4px;
+}
+
+.wt-dc-section-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #52b788;
+  margin-bottom: 7px;
+}
+
+/* ── Taxonomy rows ── */
+.wt-dc-tax-grid {
+  display: grid;
+  grid-template-columns: 105px 1fr;
+  border: 1px solid #2a4035;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.wt-dc-tax-row { display: contents; }
+
+.wt-dc-tax-row > span {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  border-bottom: 1px solid #1e3028;
+}
+.wt-dc-tax-row:last-child > span { border-bottom: none; }
+
+.wt-dc-tax-row > span:first-child {
+  color: #8aa395;
+  font-size: 10.5px;
+  font-weight: 500;
+  background: #0f1a15;
+}
+.wt-dc-tax-row > span:last-child {
+  color: #e8f0ea;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+/* ── Observation rows ── */
+.wt-dc-obs-grid {
+  border: 1px solid #2a4035;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.wt-dc-obs-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 10px;
+  border-bottom: 1px solid #1e3028;
+  font-size: 11.5px;
+}
+.wt-dc-obs-row:last-child { border-bottom: none; }
+
+.wt-dc-obs-label {
+  color: #8aa395;
+  font-size: 10.5px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.wt-dc-obs-value {
+  color: #e8f0ea;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  text-align: right;
+  word-break: break-all;
+}
+.wt-dc-obs-value[data-null="true"] {
+  color: #4a6358;
+  font-style: italic;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 10.5px;
+}
+
+/* ── GBIF not-found / unavailable notice ── */
+.wt-dc-taxonomy-notice {
+  padding: 10px 12px;
+  border: 1px solid #2a4035;
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: #8aa395;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: #0f1a15;
+  line-height: 1.45;
+}
+.wt-dc-taxonomy-notice[data-kind="unavailable"] {
+  border-color: rgba(224, 112, 112, 0.3);
+  color: #e07070;
+}
+
+/* ── Attribution banner ── */
+.wt-dc-attribution {
+  margin: 4px 16px 12px;
+  padding: 9px 12px;
+  background: #0f1a15;
+  border: 1px solid #2a4035;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wt-dc-attribution-title {
+  font-weight: 700;
+  color: #52b788;
+  font-size: 9.5px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.wt-dc-attribution-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #8aa395;
+}
+
+.wt-dc-attribution-link {
+  color: #52b788;
+  text-decoration: none;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.13s;
+  white-space: nowrap;
+}
+.wt-dc-attribution-link:hover { color: #95d5b2; text-decoration: underline; }
+
+.wt-dc-attribution-license {
+  font-size: 10px;
+  color: #6b8a7a;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.wt-dc-attribution-sub {
+  font-size: 10px;
+  color: #4a6358;
+}
+
+/* ── Error / not found states ── */
+.wt-dc-error-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  gap: 8px;
+}
+
+.wt-dc-error-icon { font-size: 36px; line-height: 1; }
+
+.wt-dc-error-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8f0ea;
+}
+
+.wt-dc-error-sub {
+  font-size: 11.5px;
+  color: #6b8a7a;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* ── Skeleton ── */
+.wt-dc-skeleton {
+  border-radius: 5px;
+  background: linear-gradient(90deg, #1e3028 25%, #253d30 50%, #1e3028 75%);
+  background-size: 200% 100%;
+  animation: wtDcSkeleton 1.4s ease-in-out infinite;
+}
+@keyframes wtDcSkeleton {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.wt-dc-skel-line {
+  height: 12px;
+  margin-bottom: 8px;
+}

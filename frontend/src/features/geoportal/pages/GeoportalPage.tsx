@@ -15,6 +15,7 @@ import TraceLayer from "../components/TraceLayer";
 import AnimalFeedingDashboard from "../components/AnimalFeedingDashboard";
 import StationVisitsModal from "../components/StationVisitsModal";
 import ExportModal from "../components/ExportModal";
+import DarwinCoreModal from "../components/DarwinCoreModal";
 import { useGeoportalStats } from "../hooks/useGeoportalStats";
 import type {
   AnimalHistoryResponse,
@@ -217,6 +218,7 @@ export default function GeoportalPage() {
   const [traceAnimal, setTraceAnimal] = useState<AnimalMovement | null>(null);
   const [dashboardAnimalId, setDashboardAnimalId] = useState<string | null>(null);
   const [visitsStationId, setVisitsStationId] = useState<string | null>(null);
+  const [darwinAnimalId, setDarwinAnimalId] = useState<string | null>(null);
 
   const { data: stats } = useGeoportalStats(timePeriod);
 
@@ -258,6 +260,14 @@ export default function GeoportalPage() {
             setTraceAnimal(m);
             setShowStats(false);
           }}
+        />
+      )}
+
+      {/* Darwin Core modal */}
+      {darwinAnimalId && (
+        <DarwinCoreModal
+          animalId={darwinAnimalId}
+          onClose={() => setDarwinAnimalId(null)}
         />
       )}
 
@@ -426,6 +436,7 @@ export default function GeoportalPage() {
           onClose={handleClose}
           onOpenHistory={(animalId) => setDashboardAnimalId(animalId)}
           onOpenVisits={() => setVisitsStationId(selectedId)}
+          onOpenDarwinCore={(animalId) => setDarwinAnimalId(animalId)}
         />
       )}
     </Box>

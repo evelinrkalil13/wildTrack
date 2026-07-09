@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +10,12 @@ import math
 from modules.geoportal.schemas import (
     ActivityItem,
     AnimalHistoryResponse,
+    DarwinCoreObservation,
+    DarwinCoreResponse,
+    DarwinCoreSources,
+    GbifTaxonomy,
+    ObservationSource,
+    TaxonomySource,
     GeoportalAnimalRead,
     GeoportalDeviceInfo,
     GeoportalRecentEvent,
@@ -359,4 +365,118 @@ class GeoportalService:
             estaciones=estaciones,
             sectores=sectores,
             animales_con_chip=animales,
+        )
+
+    # ── GEO-9: Darwin Core ────────────────────────────────────────────────────
+
+    @staticmethod
+    async def get_darwin_core(
+        session: AsyncSession,
+        animal_id: str,
+    ) -> Optional[DarwinCoreResponse]:
+        from infrastructure.gbif_client import fetch_taxonomy
+
+        # 1. Resolve animal from PostgreSQL
+        animal = await GeoportalRepository.get_animal_by_id(session, animal_id)
+        if animal is None:
+            return None
+
+        # 2. Fetch GBIF taxonomy (cached 24 h)
+        gbif_data, source_status = await fetch_taxonomy(animal.species)
+
+        # 3. Find last RFID event → station → zone
+        event_date: Optional[str] = None
+        station_row = None
+        zone_row = None
+
+        if animal.rfid_tag:
+            last_event = await GeoportalRepository.get_last_rfid_event_for_animal(
+                animal.rfid_tag
+            )
+            if last_event:
+                ts = last_event.get("ingested_at")
+                event_date = ts.isoformat() if isinstance(ts, datetime) else str(ts) if ts else None
+                event_station_id = last_event.get("station_id")
+                if event_station_id:
+                    row = await GeoportalRepository.get_station_with_zone(
+                        session, str(event_station_id)
+                    )
+                    if row:
+                        station_row, zone_row = row
+
+        # 4. Build GbifTaxonomy schema
+        taxonomy_schema: Optional[GbifTaxonomy] = None
+        if gbif_data is not None:
+            taxonomy_schema = GbifTaxonomy(
+                kingdom=gbif_data.kingdom,
+                phylum=gbif_data.phylum,
+                taxon_class=gbif_data.taxon_class,
+                order=gbif_data.order,
+                family=gbif_data.family,
+                genus=gbif_data.genus,
+                specific_epithet=gbif_data.specific_epithet,
+                scientific_name=gbif_data.scientific_name,
+                scientific_name_authorship=gbif_data.scientific_name_authorship,
+                taxon_rank=gbif_data.taxon_rank,
+                vernacular_name=gbif_data.vernacular_name,
+                gbif_usage_key=gbif_data.gbif_usage_key,
+                gbif_confidence=gbif_data.gbif_confidence,
+                gbif_match_type=gbif_data.gbif_match_type,
+            )
+
+        # 5. Build observation
+        sex_value: Optional[str] = animal.sex.value if animal.sex else None
+
+        observation = DarwinCoreObservation(
+            occurrence_id=str(animal.id),
+            catalog_number=animal.rfid_tag,
+            basis_of_record="MachineObservation",
+            event_date=event_date,
+            recorded_by="WildTrack Biomonitoring System",
+            sex=sex_value,
+            life_stage=animal.estimated_age,
+            occurrence_remarks=animal.notes,
+            individual_count=1,
+            decimal_latitude=float(station_row.latitude) if station_row else None,
+            decimal_longitude=float(station_row.longitude) if station_row else None,
+            geodetic_datum="WGS84",
+            coordinate_uncertainty_in_meters=10,
+            country=zone_row.country if zone_row else None,
+            state_province=zone_row.city if zone_row else None,
+            municipality=zone_row.municipality if zone_row else None,
+            locality=station_row.name if station_row else None,
+            location_remarks=f"Estación {station_row.code}" if station_row else None,
+            institution_code="WildTrack",
+            collection_code="BIOMONIT-ABR",
+            dataset_name="WildTrack Geoportal — Monitoreo de Fauna",
+            rights_holder="WildTrack",
+            license="CC BY-NC 4.0",
+            nomenclatural_code="ICZN",
+        )
+
+        _GBIF_BASE_URL = "https://www.gbif.org/species"
+        _GBIF_API_BASE = "https://api.gbif.org/v1/species"
+        gbif_usage_key = gbif_data.gbif_usage_key if gbif_data else None
+
+        sources = DarwinCoreSources(
+            taxonomy=TaxonomySource(
+                provider="GBIF — Global Biodiversity Information Facility",
+                url=f"{_GBIF_BASE_URL}/{gbif_usage_key}" if gbif_usage_key else None,
+                api_url=f"{_GBIF_API_BASE}/{gbif_usage_key}" if gbif_usage_key else None,
+                license="CC BY 4.0",
+            ),
+            observation=ObservationSource(
+                provider="WildTrack Biomonitoring System",
+                platform="wildtrack.local",
+            ),
+        )
+
+        return DarwinCoreResponse(
+            animal_id=str(animal.id),
+            species=animal.species,
+            source_status=source_status,
+            taxonomy=taxonomy_schema,
+            observation=observation,
+            sources=sources,
+            generated_at=datetime.now(timezone.utc),
         )
