@@ -174,6 +174,77 @@ export interface StationEventsResponse {
   events: StationEventDetail[];
 }
 
+// ── GEO-9 ─────────────────────────────────────────────────────────────────────
+
+export type DarwinCoreSourceStatus = "ok" | "fuzzy_match" | "not_found" | "unavailable";
+
+export interface GbifTaxonomy {
+  kingdom: string | null;
+  phylum: string | null;
+  taxon_class: string | null;
+  order: string | null;
+  family: string | null;
+  genus: string | null;
+  specific_epithet: string | null;
+  scientific_name: string | null;
+  scientific_name_authorship: string | null;
+  taxon_rank: string | null;
+  vernacular_name: string | null;
+  gbif_usage_key: number | null;
+  gbif_confidence: number | null;
+  gbif_match_type: string | null;
+}
+
+export interface DarwinCoreObservation {
+  occurrence_id: string;
+  catalog_number: string | null;
+  basis_of_record: string;
+  event_date: string | null;
+  recorded_by: string;
+  sex: string | null;
+  life_stage: string | null;
+  occurrence_remarks: string | null;
+  individual_count: number;
+  decimal_latitude: number | null;
+  decimal_longitude: number | null;
+  geodetic_datum: string;
+  coordinate_uncertainty_in_meters: number;
+  country: string | null;
+  state_province: string | null;
+  municipality: string | null;
+  locality: string | null;
+  location_remarks: string | null;
+  institution_code: string;
+  collection_code: string;
+  dataset_name: string;
+  rights_holder: string;
+  license: string;
+  nomenclatural_code: string;
+}
+
+export interface DarwinCoreSources {
+  taxonomy: {
+    provider: string;
+    url: string | null;
+    api_url: string | null;
+    license: string;
+  };
+  observation: {
+    provider: string;
+    platform: string;
+  };
+}
+
+export interface DarwinCoreResponse {
+  animal_id: string;
+  species: string;
+  source_status: DarwinCoreSourceStatus;
+  taxonomy: GbifTaxonomy | null;
+  observation: DarwinCoreObservation;
+  sources: DarwinCoreSources;
+  generated_at: string;
+}
+
 // ── GEO-6 ─────────────────────────────────────────────────────────────────────
 
 export interface FeedingEvent {

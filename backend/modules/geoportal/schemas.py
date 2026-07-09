@@ -225,3 +225,79 @@ class AnimalHistoryResponse(BaseModel):
     trace_path: list[TraceStop]
     insight_text: str
     time_filter: str
+
+
+# ── GEO-9: Darwin Core Species Sheet ─────────────────────────────────────────
+
+class GbifTaxonomy(BaseModel):
+    kingdom: Optional[str] = None
+    phylum: Optional[str] = None
+    taxon_class: Optional[str] = None        # "class" is a Python keyword
+    order: Optional[str] = None
+    family: Optional[str] = None
+    genus: Optional[str] = None
+    specific_epithet: Optional[str] = None
+    scientific_name: Optional[str] = None
+    scientific_name_authorship: Optional[str] = None
+    taxon_rank: Optional[str] = None
+    vernacular_name: Optional[str] = None
+    gbif_usage_key: Optional[int] = None
+    gbif_confidence: Optional[int] = None
+    gbif_match_type: Optional[str] = None
+
+
+class DarwinCoreObservation(BaseModel):
+    # Occurrence
+    occurrence_id: str
+    catalog_number: Optional[str] = None
+    basis_of_record: str
+    event_date: Optional[str] = None
+    recorded_by: str
+    sex: Optional[str] = None
+    life_stage: Optional[str] = None
+    occurrence_remarks: Optional[str] = None
+    individual_count: int
+    # Location
+    decimal_latitude: Optional[float] = None
+    decimal_longitude: Optional[float] = None
+    geodetic_datum: str
+    coordinate_uncertainty_in_meters: int
+    country: Optional[str] = None
+    state_province: Optional[str] = None
+    municipality: Optional[str] = None
+    locality: Optional[str] = None
+    location_remarks: Optional[str] = None
+    # Record-level
+    institution_code: str
+    collection_code: str
+    dataset_name: str
+    rights_holder: str
+    license: str
+    nomenclatural_code: str
+
+
+class TaxonomySource(BaseModel):
+    provider: str
+    url: Optional[str] = None
+    api_url: Optional[str] = None
+    license: str
+
+
+class ObservationSource(BaseModel):
+    provider: str
+    platform: str
+
+
+class DarwinCoreSources(BaseModel):
+    taxonomy: TaxonomySource
+    observation: ObservationSource
+
+
+class DarwinCoreResponse(BaseModel):
+    animal_id: str
+    species: str
+    source_status: str       # "ok" | "fuzzy_match" | "not_found" | "unavailable"
+    taxonomy: Optional[GbifTaxonomy] = None
+    observation: DarwinCoreObservation
+    sources: DarwinCoreSources
+    generated_at: datetime

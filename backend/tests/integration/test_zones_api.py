@@ -31,6 +31,7 @@ def _make_zone_read(**kwargs) -> ZoneRead:
         altitude=kwargs.get("altitude", 2600.0),
         latitude=kwargs.get("latitude", 4.6),
         longitude=kwargs.get("longitude", -74.08),
+        color=kwargs.get("color", "#52b788"),
         created_at=kwargs.get("created_at", datetime.now(timezone.utc)),
         updated_at=kwargs.get("updated_at", datetime.now(timezone.utc)),
     )

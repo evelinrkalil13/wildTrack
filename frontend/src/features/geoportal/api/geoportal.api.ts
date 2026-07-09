@@ -2,6 +2,7 @@ import { apiClient } from "@/api/client";
 import type {
   ActivityItem,
   AnimalHistoryResponse,
+  DarwinCoreResponse,
   EventFilter,
   GeoportalAnimalRead,
   GeoportalStationDetail,
@@ -83,6 +84,13 @@ export async function getAnimalHistory(
   const res = await apiClient.get<AnimalHistoryResponse>(
     `/geoportal/animals/${animalId}/history`,
     { params: { time_filter: timePeriod } }
+  );
+  return res.data;
+}
+
+export async function getDarwinCore(animalId: string): Promise<DarwinCoreResponse> {
+  const res = await apiClient.get<DarwinCoreResponse>(
+    `/geoportal/animals/${animalId}/darwin-core`
   );
   return res.data;
 }

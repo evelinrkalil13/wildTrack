@@ -15,7 +15,10 @@ export function useUpdateZone() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ZoneUpdate }) =>
       updateZone(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["zones"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["zones"] });
+      qc.invalidateQueries({ queryKey: ["geoportal-stations"] });
+    },
   });
 }
 

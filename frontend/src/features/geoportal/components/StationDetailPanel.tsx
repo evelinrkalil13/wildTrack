@@ -73,6 +73,7 @@ interface StationDetailPanelProps {
   onClose: () => void;
   onOpenHistory: (animalId: string) => void;
   onOpenVisits?: () => void;
+  onOpenDarwinCore?: (animalId: string) => void;
 }
 
 export default function StationDetailPanel({
@@ -82,6 +83,7 @@ export default function StationDetailPanel({
   onClose,
   onOpenHistory,
   onOpenVisits,
+  onOpenDarwinCore,
 }: StationDetailPanelProps) {
   const { data: detail, isPending: detailPending } = useStationDetail(
     stationId,
@@ -304,6 +306,7 @@ export default function StationDetailPanel({
                 key={animal.animal_id}
                 animal={animal}
                 onOpenHistory={onOpenHistory}
+                onOpenDarwinCore={onOpenDarwinCore}
               />
             ))}
           </div>
@@ -335,9 +338,11 @@ export default function StationDetailPanel({
 function AnimalCard({
   animal,
   onOpenHistory,
+  onOpenDarwinCore,
 }: {
   animal: GeoportalAnimalRead;
   onOpenHistory: (animalId: string) => void;
+  onOpenDarwinCore?: (animalId: string) => void;
 }) {
   return (
     <div className="wt-ind-card">
@@ -361,12 +366,25 @@ function AnimalCard({
         {animal.last_visit && ` · último ${timeAgo(animal.last_visit)}`}
       </div>
       {animal.notes && <div className="wt-ind-notes">{animal.notes}</div>}
-      <button
-        className="wt-ind-history-btn"
-        onClick={() => onOpenHistory(animal.animal_id)}
-      >
-        Ver historial →
-      </button>
+      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+        <button
+          className="wt-ind-history-btn"
+          style={{ flex: 1 }}
+          onClick={() => onOpenHistory(animal.animal_id)}
+        >
+          Ver historial →
+        </button>
+        {onOpenDarwinCore && (
+          <button
+            className="wt-ind-history-btn"
+            style={{ flex: 1, borderColor: "#2a4035", color: "#8aa395" }}
+            title="Ficha Darwin Core — taxonomía GBIF"
+            onClick={() => onOpenDarwinCore(animal.animal_id)}
+          >
+            Darwin Core
+          </button>
+        )}
+      </div>
     </div>
   );
 }

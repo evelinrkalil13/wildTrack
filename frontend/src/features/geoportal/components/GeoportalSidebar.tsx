@@ -1,7 +1,119 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type { GeoportalStationMapItem, TimePeriod } from "../api/geoportal.types";
 import { StationStatus } from "@/api/types/enums";
+import { useUpdateZone } from "@/features/zones/hooks/useZoneMutations";
 import "./GeoportalSidebar.css";
+
+const PRESET_COLORS = [
+  "#52b788", // verde bosque (default)
+  "#95d5b2", // verde claro
+  "#2d6a4f", // verde oscuro
+  "#74b3ce", // azul cielo
+  "#8ecae6", // azul claro
+  "#c77dff", // violeta
+  "#e08a1e", // ámbar
+  "#f4a261", // naranja
+  "#e07070", // rojo suave
+  "#f4d35e", // amarillo
+  "#d4a574", // arena
+  "#adb5bd", // gris
+];
+
+function ZoneColorPicker({
+  zoneId,
+  currentColor,
+}: {
+  zoneId: string;
+  currentColor: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pendingCustom, setPendingCustom] = useState<string | null>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+  const { mutate: updateZone, isPending } = useUpdateZone();
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (popRef.current && !popRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setPendingCustom(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  function pick(color: string) {
+    updateZone({ id: zoneId, data: { color } });
+    setOpen(false);
+    setPendingCustom(null);
+  }
+
+  const previewColor = pendingCustom ?? currentColor;
+  const hasCustomPending = pendingCustom !== null && pendingCustom !== currentColor;
+
+  return (
+    <div ref={popRef} style={{ position: "relative", flexShrink: 0 }}>
+      <button
+        className="wt-color-dot-btn"
+        title="Cambiar color de zona"
+        aria-label="Cambiar color de zona"
+        disabled={isPending}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+          setPendingCustom(null);
+        }}
+      >
+        <span
+          className="sector-color-dot"
+          style={{ background: currentColor, color: currentColor }}
+        />
+      </button>
+
+      {open && (
+        <div className="wt-color-picker-pop">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              className="wt-color-swatch"
+              style={{ background: c }}
+              data-active={String(c === currentColor && !pendingCustom)}
+              title={c}
+              onClick={(e) => {
+                e.stopPropagation();
+                pick(c);
+              }}
+            />
+          ))}
+
+          {/* Custom color row */}
+          <div className="wt-color-custom-row" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="wt-color-custom-wrap"
+              title="Elegir color personalizado"
+              style={{ background: previewColor, borderColor: pendingCustom ? "#52b788" : "#2a4035" }}
+            >
+              <input
+                type="color"
+                value={previewColor}
+                onChange={(e) => setPendingCustom(e.target.value)}
+              />
+            </div>
+            <button
+              className="wt-color-apply-btn"
+              disabled={!hasCustomPending}
+              onClick={() => hasCustomPending && pick(pendingCustom!)}
+              title={hasCustomPending ? `Aplicar ${pendingCustom}` : "Elige un color distinto"}
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type FilterMode = "todas" | "alerta" | "noid";
 
@@ -235,12 +347,9 @@ export default function GeoportalSidebar({
                   aria-label={`${isCollapsed ? "Expandir" : "Colapsar"} zona ${zone.zone_name}`}
                 >
                   <ChevronIcon collapsed={isCollapsed} />
-                  <span
-                    className="sector-color-dot"
-                    style={{
-                      background: zone.zone_color,
-                      color: zone.zone_color,
-                    }}
+                  <ZoneColorPicker
+                    zoneId={zone.zone_id}
+                    currentColor={zone.zone_color}
                   />
                   <span className="sector-name">{zone.zone_name}</span>
                   <span className="sector-desc">

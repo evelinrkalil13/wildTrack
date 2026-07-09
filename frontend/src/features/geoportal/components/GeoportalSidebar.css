@@ -413,3 +413,119 @@
   background: #1e3028;
   color: #e8f0ea;
 }
+
+/* ── Zone color picker ── */
+.wt-color-dot-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wt-color-dot-btn .sector-color-dot {
+  transition: transform 0.13s, box-shadow 0.13s;
+}
+.wt-color-dot-btn:hover .sector-color-dot {
+  transform: scale(1.35);
+  box-shadow: 0 0 8px currentColor;
+}
+
+.wt-color-picker-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 600;
+  background: #16241d;
+  border: 1px solid #2a4035;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 162px;
+}
+
+.wt-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+.wt-color-swatch:hover {
+  transform: scale(1.2);
+}
+.wt-color-swatch[data-active="true"] {
+  border-color: #fff;
+  transform: scale(1.15);
+}
+
+.wt-color-custom-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid #2a4035;
+}
+
+.wt-color-custom-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid #2a4035;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.13s, transform 0.13s;
+}
+.wt-color-custom-wrap:hover {
+  border-color: #52b788;
+  transform: scale(1.1);
+}
+.wt-color-custom-wrap input[type="color"] {
+  position: absolute;
+  inset: -4px;
+  opacity: 0;
+  cursor: pointer;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  border: none;
+  padding: 0;
+}
+
+.wt-color-apply-btn {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #2a4035;
+  background: #1e3028;
+  color: #8aa395;
+  font-size: 11px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+.wt-color-apply-btn:not(:disabled) {
+  background: #2d6a4f;
+  color: #e8f0ea;
+  border-color: #52b788;
+  cursor: pointer;
+}
+.wt-color-apply-btn:not(:disabled):hover {
+  background: #52b788;
+  color: #0f1a15;
+}

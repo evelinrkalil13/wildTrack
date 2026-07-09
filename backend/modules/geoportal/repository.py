@@ -426,6 +426,30 @@ class GeoportalRepository:
         return {doc["_id"]: doc["count"] async for doc in cursor}
 
     @staticmethod
+    async def get_last_rfid_event_for_animal(rfid_tag: str) -> Optional[dict]:
+        """Most recent IoT event for this RFID tag from MongoDB, or None."""
+        return await get_collection(COLLECTION_IOT_EVENTS).find_one(
+            {"rfid_tag": rfid_tag},
+            sort=[("ingested_at", -1)],
+        )
+
+    @staticmethod
+    async def get_station_with_zone(
+        session: AsyncSession,
+        station_id: str,
+    ) -> Optional[tuple]:
+        """Return (Station, Zone) row or None."""
+        result = await session.execute(
+            select(Station, Zone)
+            .join(Zone, Station.zone_id == Zone.id)
+            .where(
+                Station.id == UUID(station_id),
+                Station.deleted_at.is_(None),
+            )
+        )
+        return result.first()
+
+    @staticmethod
     async def get_animal_station_paths(
         rfid_tags: list[str],
         cutoff: Optional[datetime] = None,

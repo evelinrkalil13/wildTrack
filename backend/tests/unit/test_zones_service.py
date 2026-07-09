@@ -22,6 +22,7 @@ def _make_zone(**kwargs) -> MagicMock:
     zone.altitude = kwargs.get("altitude", 1200.0)
     zone.latitude = kwargs.get("latitude", 4.5)
     zone.longitude = kwargs.get("longitude", -74.1)
+    zone.color = kwargs.get("color", "#52b788")
     zone.geom = None
     zone.deleted_at = None
     from datetime import datetime, timezone
