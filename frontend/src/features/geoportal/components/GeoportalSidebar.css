@@ -1,0 +1,415 @@
+/* GeoportalSidebar — dark theme matching the reference geoportal visual style */
+/* All rules scoped under .wt-sidebar to avoid MUI conflicts */
+
+.wt-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #16241d;
+  border-right: 1px solid #2a4035;
+  color: #e8f0ea;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: width 0.22s ease, border-color 0.22s ease;
+}
+
+.wt-sidebar[data-open="false"] {
+  width: 0;
+  min-width: 0;
+  border-right-color: transparent;
+}
+
+/* ---- KPI row ---- */
+.wt-sidebar .kpis {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #2a4035;
+}
+
+.wt-sidebar .kpi {
+  flex: 1;
+  background: #1d3128;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.wt-sidebar .kpi .num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: #e8f0ea;
+}
+
+.wt-sidebar .kpi .lbl {
+  font-size: 10px;
+  color: #8aa395;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.wt-sidebar .kpi.alert .num {
+  color: #e08a1e;
+}
+
+/* ---- Controls (search + chips + period) ---- */
+.wt-sidebar .controls {
+  padding: 14px 18px;
+  border-bottom: 1px solid #2a4035;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wt-sidebar .search {
+  width: 100%;
+  background: #0f1a15;
+  border: 1px solid #2a4035;
+  border-radius: 9px;
+  padding: 9px 12px;
+  color: #e8f0ea;
+  font-size: 13px;
+  font-family: 'Inter', system-ui, sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  transition: outline 0.12s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wt-sidebar .search::placeholder {
+  color: #5f7669;
+}
+
+.wt-sidebar .search:focus {
+  outline: 2px solid #2d6a4f;
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.wt-sidebar .filters {
+  display: flex;
+  gap: 6px;
+}
+
+.wt-sidebar .chip {
+  flex: 1;
+  font-size: 11px;
+  padding: 7px 6px;
+  border-radius: 8px;
+  border: 1px solid #2a4035;
+  color: #8aa395;
+  background: transparent;
+  transition: all 0.12s;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.wt-sidebar .chip[data-active="true"] {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.wt-sidebar .chip:hover {
+  border-color: #52b788;
+}
+
+/* Time period select */
+.wt-sidebar .time-select {
+  width: 100%;
+  background: #0f1a15;
+  border: 1px solid #2a4035;
+  border-radius: 9px;
+  padding: 8px 12px;
+  color: #e8f0ea;
+  font-size: 12.5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238aa395' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.wt-sidebar .time-select:focus {
+  outline: 2px solid #2d6a4f;
+  border-color: transparent;
+}
+
+/* Status legend */
+.wt-sidebar .status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  background: #0f1a15;
+  border-radius: 9px;
+  border: 1px solid #2a4035;
+  font-size: 11px;
+  color: #8aa395;
+}
+
+.wt-sidebar .legend-title {
+  color: #5f7669;
+  font-size: 10.5px;
+  width: 100%;
+}
+
+.wt-sidebar .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #8aa395;
+}
+
+/* ---- Status dot ---- */
+.wt-sidebar .st-status {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.wt-sidebar .st-status[data-s="online"]  { background: #52b788; }
+.wt-sidebar .st-status[data-s="alert"]   { background: #e08a1e; }
+.wt-sidebar .st-status[data-s="offline"] { background: #5f7669; }
+
+/* ---- Station list ---- */
+.wt-sidebar .station-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 12px 16px;
+  min-height: 0;
+}
+
+.wt-sidebar .station-list .empty {
+  color: #5f7669;
+  font-size: 13px;
+  text-align: center;
+  padding: 28px 12px;
+}
+
+.wt-sidebar .station-list .loading {
+  padding: 16px 4px;
+  color: #8aa395;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ---- Zone groups ---- */
+.wt-sidebar .sector-group {
+  margin-bottom: 4px;
+}
+
+.wt-sidebar .sector-toggle {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #2a4035;
+  color: #e8f0ea;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 8px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.12s;
+  border-radius: 0;
+}
+
+.wt-sidebar .sector-toggle:hover {
+  background: #1d3128;
+}
+
+.wt-sidebar .sector-color-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.wt-sidebar .sector-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex: 1;
+  color: #e8f0ea;
+}
+
+.wt-sidebar .sector-desc {
+  font-size: 10.5px;
+  color: #5f7669;
+}
+
+/* ---- Station row ---- */
+.wt-sidebar .st-row {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  transition: background 0.12s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #e8f0ea;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.wt-sidebar .st-row:hover {
+  background: #1d3128;
+}
+
+.wt-sidebar .st-row[data-active="true"] {
+  background: #1d3128;
+  box-shadow: inset 2px 0 0 var(--sector-color, #e08a1e);
+}
+
+.wt-sidebar .st-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.wt-sidebar .st-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.wt-sidebar .st-sub {
+  font-size: 11px;
+  color: #8aa395;
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wt-sidebar .st-count {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #95d5b2;
+  flex-shrink: 0;
+}
+
+/* Live badge */
+.wt-sidebar .live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 7px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid #3b82f6;
+  padding: 1px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+}
+
+/* ---- Footer ---- */
+.wt-sidebar .sidebar-footer {
+  padding: 12px 18px;
+  border-top: 1px solid #2a4035;
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.wt-sidebar .btn-footer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid #2d6a4f;
+  color: #52b788;
+  background: transparent;
+  transition: all 0.13s;
+  font-family: 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wt-sidebar .btn-footer:hover:not(:disabled) {
+  background: rgba(82, 183, 136, 0.1);
+  border-color: #52b788;
+}
+
+.wt-sidebar .btn-footer:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Scrollbar inside list */
+.wt-sidebar .station-list::-webkit-scrollbar {
+  width: 4px;
+}
+.wt-sidebar .station-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wt-sidebar .station-list::-webkit-scrollbar-thumb {
+  background: #2a4035;
+  border-radius: 2px;
+}
+
+/* ---- Sidebar toggle tab (rendered outside the sidebar, over the map) ---- */
+.wt-sidebar-toggle-tab {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 56px;
+  background: #16241d;
+  border: 1px solid #2a4035;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  color: #52b788;
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.35);
+  transition: background 0.13s, color 0.13s;
+  padding: 0;
+}
+.wt-sidebar-toggle-tab:hover {
+  background: #1e3028;
+  color: #e8f0ea;
+}

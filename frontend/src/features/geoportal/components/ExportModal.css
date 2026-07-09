@@ -1,0 +1,174 @@
+/* ── ExportModal — dark forest theme (reference: modal-export) ─────────────── */
+
+.wt-export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(8, 16, 12, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+
+.wt-export-modal {
+  background: #16241d;
+  border: 1px solid #2a4035;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  font-family: "Inter", system-ui, sans-serif;
+  color: #e8f0ea;
+  overflow: hidden;
+}
+
+/* ── Head ── */
+.wt-export-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #2a4035;
+  flex-shrink: 0;
+}
+
+.wt-export-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e8f0ea;
+  margin: 0 0 3px;
+}
+
+.wt-export-subtitle {
+  font-size: 11.5px;
+  color: #8aa395;
+}
+
+.wt-export-close {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #1e3028;
+  border: 1px solid #2a4035;
+  color: #8aa395;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.wt-export-close:hover { background: rgba(255,255,255,0.07); color: #e8f0ea; }
+
+/* ── Cards ── */
+.wt-export-cards {
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.wt-export-card {
+  background: #1e3028;
+  border: 1px solid #2a4035;
+  border-radius: 12px;
+  padding: 14px 15px;
+}
+
+.wt-export-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.wt-export-card-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.wt-export-card-info { flex: 1; min-width: 0; }
+
+.wt-export-card-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8f0ea;
+}
+
+.wt-export-card-meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: #8aa395;
+  margin-top: 2px;
+}
+
+.wt-export-card-desc {
+  font-size: 12px;
+  color: #8aa395;
+  line-height: 1.55;
+  margin-bottom: 11px;
+}
+
+.wt-export-formats {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+/* ── Shared export buttons (used in ExportModal, inline in other components) ── */
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 13px;
+  border-radius: 7px;
+  border: 1px solid #2d6a4f;
+  color: #52b788;
+  background: transparent;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.3px;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.btn-export:hover { background: rgba(82, 183, 136, 0.12); border-color: #52b788; }
+
+.btn-export-geo {
+  border-color: #c07a1a;
+  color: #e08a1e;
+}
+.btn-export-geo:hover { background: rgba(224, 138, 30, 0.12); border-color: #e08a1e; }
+
+/* Inline download button used in StationDetailPanel, StationVisitsModal,
+   AnimalFeedingDashboard — small variant */
+.btn-download-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid #2d6a4f;
+  color: #52b788;
+  background: transparent;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.btn-download-inline:hover { background: rgba(82, 183, 136, 0.12); border-color: #52b788; }
+.btn-download-inline:disabled { opacity: 0.4; cursor: default; }

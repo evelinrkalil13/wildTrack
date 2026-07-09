@@ -16,6 +16,7 @@ class Zone(Base):
     altitude = Column(Double, nullable=True)
     latitude = Column(Numeric(10, 7, asdecimal=False), nullable=False)
     longitude = Column(Numeric(10, 7, asdecimal=False), nullable=False)
+    color = Column(String(7), nullable=False, server_default="#52b788")
     geom = Column(Geometry("POINT", srid=4326, spatial_index=False), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

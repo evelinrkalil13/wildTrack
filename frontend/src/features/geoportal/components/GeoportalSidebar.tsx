@@ -1,32 +1,73 @@
-import { useState } from "react";
-import {
-  Badge,
-  Box,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Typography,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import CellTowerIcon from "@mui/icons-material/CellTower";
-import type { GeoportalStationRead } from "../api/geoportal.types";
+import { useState, useMemo } from "react";
+import type { GeoportalStationMapItem, TimePeriod } from "../api/geoportal.types";
 import { StationStatus } from "@/api/types/enums";
+import "./GeoportalSidebar.css";
 
-const STATUS_DOT_COLOR: Record<StationStatus, string> = {
-  [StationStatus.active]:      "#52b788",
-  [StationStatus.maintenance]: "#e08a1e",
-  [StationStatus.offline]:     "#5f7669",
-  [StationStatus.inactive]:    "#5f7669",
+type FilterMode = "todas" | "alerta" | "noid";
+
+type ZoneGroup = {
+  zone_id: string;
+  zone_name: string;
+  zone_color: string;
+  stations: GeoportalStationMapItem[];
 };
 
+function ChevronIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      style={{
+        flexShrink: 0,
+        transition: "transform 0.2s",
+        transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+      }}
+    >
+      <path
+        d="M2.5 4.5L6 8l3.5-3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BarChartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 20V10h3v10H4zm6.5 0V4h3v16h-3zM17 20v-7h3v7h-3z" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-6 2h12v2H6v-2z" />
+    </svg>
+  );
+}
+
+function statusDotKey(s: GeoportalStationMapItem): "online" | "alert" | "offline" {
+  if (s.open_alerts_count > 0) return "alert";
+  if (s.status === StationStatus.active) return "online";
+  return "offline";
+}
+
 interface GeoportalSidebarProps {
-  stations: GeoportalStationRead[];
+  stations: GeoportalStationMapItem[];
   selectedStationId: string | null;
-  onSelect: (station: GeoportalStationRead) => void;
+  onSelect: (station: GeoportalStationMapItem) => void;
   isLoading: boolean;
+  timePeriod: TimePeriod;
+  onTimePeriodChange: (t: TimePeriod) => void;
+  onStatsOpen: () => void;
+  onExportOpen: () => void;
+  open: boolean;
 }
 
 export default function GeoportalSidebar({
@@ -34,167 +75,229 @@ export default function GeoportalSidebar({
   selectedStationId,
   onSelect,
   isLoading,
+  timePeriod,
+  onTimePeriodChange,
+  onStatsOpen,
+  onExportOpen,
+  open,
 }: GeoportalSidebarProps) {
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<FilterMode>("todas");
+  const [collapsedZones, setCollapsedZones] = useState<Set<string>>(new Set());
 
-  const filtered = stations.filter(
-    (s) =>
-      s.station_name.toLowerCase().includes(search.toLowerCase()) ||
-      s.station_code.toLowerCase().includes(search.toLowerCase())
-  );
+  const alertCount = stations.filter((s) => s.open_alerts_count > 0).length;
+  const noidCount = stations.filter((s) => s.visitas_sin_identificar > 0).length;
+  const totalEventos = stations.reduce((acc, s) => acc + s.visitas_total, 0);
 
-  const total   = stations.length;
-  const active  = stations.filter((s) => s.status === StationStatus.active).length;
-  const alerted = stations.filter((s) => s.open_alerts_count > 0).length;
+  const filtered = useMemo(() => {
+    let list = stations;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.station_name.toLowerCase().includes(q) ||
+          s.station_code.toLowerCase().includes(q)
+      );
+    }
+    if (filter === "alerta") list = list.filter((s) => s.open_alerts_count > 0);
+    if (filter === "noid") list = list.filter((s) => s.visitas_sin_identificar > 0);
+    return list;
+  }, [stations, query, filter]);
+
+  const zoneGroups = useMemo(() => {
+    const map = new Map<string, ZoneGroup>();
+    for (const s of filtered) {
+      if (!map.has(s.zone_id)) {
+        map.set(s.zone_id, {
+          zone_id: s.zone_id,
+          zone_name: s.zone_name,
+          zone_color: s.zone_color,
+          stations: [],
+        });
+      }
+      map.get(s.zone_id)!.stations.push(s);
+    }
+    return [...map.values()];
+  }, [filtered]);
+
+  function toggleZone(zoneId: string) {
+    setCollapsedZones((prev) => {
+      const next = new Set(prev);
+      next.has(zoneId) ? next.delete(zoneId) : next.add(zoneId);
+      return next;
+    });
+  }
 
   return (
-    <Box
-      sx={{
-        width: 280,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "background.paper",
-        borderRight: "1px solid",
-        borderColor: "divider",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-        <Typography variant="subtitle1" fontWeight={700} sx={{ fontFamily: "Space Grotesk" }}>
-          Geoportal
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Estaciones de monitoreo
-        </Typography>
-      </Box>
+    <aside className="wt-sidebar" data-open={String(open)}>
+      {/* KPI row */}
+      <div className="kpis">
+        <div className="kpi">
+          <div className="num">{isLoading ? "—" : stations.length}</div>
+          <div className="lbl">Estaciones</div>
+        </div>
+        <div className="kpi">
+          <div className="num">{isLoading ? "—" : totalEventos}</div>
+          <div className="lbl">Eventos</div>
+        </div>
+        <div className="kpi alert">
+          <div className="num">{isLoading ? "—" : alertCount}</div>
+          <div className="lbl">Alertas</div>
+        </div>
+      </div>
 
-      {/* KPI cards */}
-      <Box sx={{ display: "flex", gap: 1, p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-        <KpiCard label="Total" value={total} color="text.primary" loading={isLoading} />
-        <KpiCard label="Activas" value={active} color="#52b788" loading={isLoading} />
-        <KpiCard label="Alertas" value={alerted} color="#e08a1e" loading={isLoading} />
-      </Box>
-
-      {/* Search */}
-      <Box sx={{ px: 1.5, py: 1 }}>
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Buscar estación..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
-              </InputAdornment>
-            ),
-          }}
+      {/* Controls */}
+      <div className="controls">
+        <input
+          className="search"
+          placeholder="Buscar estación…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Buscar estación"
         />
-      </Box>
 
-      {/* Station list */}
-      <Box sx={{ flex: 1, overflow: "auto" }}>
-        {isLoading ? (
-          <Box sx={{ px: 1.5, py: 1 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} variant="text" height={48} sx={{ mb: 0.5 }} />
-            ))}
-          </Box>
-        ) : filtered.length === 0 ? (
-          <Box sx={{ p: 2, textAlign: "center" }}>
-            <CellTowerIcon sx={{ color: "text.disabled", fontSize: 36, mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              {search ? "Sin resultados" : "Sin estaciones registradas"}
-            </Typography>
-          </Box>
-        ) : (
-          <List dense disablePadding>
-            {filtered.map((station) => {
-              const dotColor =
-                station.open_alerts_count > 0
-                  ? "#e08a1e"
-                  : STATUS_DOT_COLOR[station.status];
-              const isSelected = station.station_id === selectedStationId;
+        <div className="filters" role="group" aria-label="Filtrar estaciones">
+          <button
+            className="chip"
+            data-active={filter === "todas"}
+            onClick={() => setFilter("todas")}
+          >
+            Todas
+          </button>
+          <button
+            className="chip"
+            data-active={filter === "alerta"}
+            onClick={() => setFilter("alerta")}
+          >
+            Alerta{alertCount > 0 ? ` (${alertCount})` : ""}
+          </button>
+          <button
+            className="chip"
+            data-active={filter === "noid"}
+            onClick={() => setFilter("noid")}
+          >
+            Sin ID{noidCount > 0 ? ` (${noidCount})` : ""}
+          </button>
+        </div>
 
-              return (
-                <ListItemButton
-                  key={station.station_id}
-                  selected={isSelected}
-                  onClick={() => onSelect(station)}
-                  sx={{ px: 1.5, py: 0.75, gap: 1 }}
+        <select
+          className="time-select"
+          value={timePeriod}
+          onChange={(e) => onTimePeriodChange(e.target.value as TimePeriod)}
+          aria-label="Periodo de tiempo"
+        >
+          <option value="24h">Últimas 24 h</option>
+          <option value="7d">Últimos 7 días</option>
+          <option value="30d">Últimos 30 días</option>
+          <option value="all">Todo el tiempo</option>
+        </select>
+
+        <div className="status-legend" aria-label="Leyenda de estado">
+          <span className="legend-title">Estado de estaciones:</span>
+          <span className="legend-item">
+            <span className="st-status" data-s="online" />
+            En línea
+          </span>
+          <span className="legend-item">
+            <span className="st-status" data-s="alert" />
+            Alerta
+          </span>
+          <span className="legend-item">
+            <span className="st-status" data-s="offline" />
+            Sin señal
+          </span>
+        </div>
+      </div>
+
+      {/* Station list grouped by zone */}
+      <div className="station-list">
+        {isLoading && (
+          <div className="loading">Cargando estaciones…</div>
+        )}
+
+        {!isLoading && zoneGroups.length === 0 && (
+          <div className="empty">
+            {query || filter !== "todas"
+              ? "Ninguna estación coincide."
+              : "Sin estaciones registradas."}
+          </div>
+        )}
+
+        {!isLoading &&
+          zoneGroups.map((zone) => {
+            const isCollapsed = collapsedZones.has(zone.zone_id);
+            return (
+              <div key={zone.zone_id} className="sector-group">
+                <button
+                  className="sector-toggle"
+                  onClick={() => toggleZone(zone.zone_id)}
+                  aria-expanded={!isCollapsed}
+                  aria-label={`${isCollapsed ? "Expandir" : "Colapsar"} zona ${zone.zone_name}`}
                 >
-                  {/* Status dot */}
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      bgcolor: dotColor,
-                      flexShrink: 0,
+                  <ChevronIcon collapsed={isCollapsed} />
+                  <span
+                    className="sector-color-dot"
+                    style={{
+                      background: zone.zone_color,
+                      color: zone.zone_color,
                     }}
                   />
-                  <ListItemText
-                    primary={station.station_name}
-                    secondary={station.station_code}
-                    primaryTypographyProps={{ fontSize: "0.82rem", fontWeight: isSelected ? 600 : 400, noWrap: true }}
-                    secondaryTypographyProps={{ fontSize: "0.73rem", fontFamily: "monospace" }}
-                    sx={{ minWidth: 0 }}
-                  />
-                  {station.open_alerts_count > 0 && (
-                    <Badge
-                      badgeContent={station.open_alerts_count}
-                      color="warning"
-                      sx={{ "& .MuiBadge-badge": { fontSize: "0.65rem", height: 16, minWidth: 16 } }}
-                    >
-                      <Box sx={{ width: 16 }} />
-                    </Badge>
-                  )}
-                </ListItemButton>
-              );
-            })}
-          </List>
-        )}
-      </Box>
-    </Box>
-  );
-}
+                  <span className="sector-name">{zone.zone_name}</span>
+                  <span className="sector-desc">
+                    {zone.stations.length} est.
+                  </span>
+                </button>
 
-function KpiCard({
-  label,
-  value,
-  color,
-  loading,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  loading: boolean;
-}) {
-  return (
-    <Box
-      sx={{
-        flex: 1,
-        bgcolor: "background.default",
-        borderRadius: 2,
-        p: 1,
-        textAlign: "center",
-        border: "1px solid",
-        borderColor: "divider",
-      }}
-    >
-      {loading ? (
-        <Skeleton variant="text" width="60%" sx={{ mx: "auto" }} />
-      ) : (
-        <Typography variant="h6" sx={{ color, fontWeight: 700, lineHeight: 1.2, fontSize: "1.1rem" }}>
-          {value}
-        </Typography>
-      )}
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.68rem" }}>
-        {label}
-      </Typography>
-    </Box>
+                {!isCollapsed &&
+                  zone.stations.map((st) => (
+                    <button
+                      key={st.station_id}
+                      className="st-row"
+                      data-active={st.station_id === selectedStationId}
+                      style={
+                        { "--sector-color": zone.zone_color } as React.CSSProperties
+                      }
+                      onClick={() => onSelect(st)}
+                    >
+                      <span className="st-status" data-s={statusDotKey(st)} />
+                      <span className="st-main">
+                        <span className="st-name">{st.station_name}</span>
+                        <span className="st-sub">
+                          {st.station_code}
+                          {st.visitas_sin_identificar > 0 &&
+                            ` · ${st.visitas_sin_identificar} sin ID`}
+                          {st.is_live && (
+                            <span className="live-badge">📡 EN VIVO</span>
+                          )}
+                        </span>
+                      </span>
+                      <span className="st-count">{st.visitas_total}</span>
+                    </button>
+                  ))}
+              </div>
+            );
+          })}
+      </div>
+
+      {/* Footer — placeholder buttons until GEO-5 and GEO-8 */}
+      <div className="sidebar-footer">
+        <button
+          className="btn-footer"
+          onClick={onStatsOpen}
+          title="Ver estadísticas globales"
+        >
+          <BarChartIcon />
+          Estadísticas
+        </button>
+        <button
+          className="btn-footer"
+          onClick={onExportOpen}
+          title="Exportar datos"
+        >
+          <DownloadIcon />
+          Exportar
+        </button>
+      </div>
+    </aside>
   );
 }
