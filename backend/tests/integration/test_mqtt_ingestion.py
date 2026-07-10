@@ -36,11 +36,20 @@ settings = get_settings()
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _mqtt_test_kwargs() -> dict:
+    kwargs: dict = {}
+    if settings.mqtt_username:
+        kwargs["username"] = settings.mqtt_username
+        kwargs["password"] = settings.mqtt_password
+    return kwargs
+
+
 async def _publish(topic: str, payload: dict) -> None:
     async with aiomqtt.Client(
         hostname=settings.mqtt_host,
         port=settings.mqtt_port,
         identifier=f"test-publisher-{uuid.uuid4().hex[:8]}",
+        **_mqtt_test_kwargs(),
     ) as client:
         await client.publish(topic, json.dumps(payload), qos=1)
 

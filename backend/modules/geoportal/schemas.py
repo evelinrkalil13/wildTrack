@@ -301,3 +301,16 @@ class DarwinCoreResponse(BaseModel):
     observation: DarwinCoreObservation
     sources: DarwinCoreSources
     generated_at: datetime
+
+
+# ── Dashboard: Latest system-wide telemetry ───────────────────────────────────
+
+class LatestTelemetryResponse(BaseModel):
+    timestamp: datetime
+    temperature_c: Optional[float] = None
+    humidity_pct: Optional[float] = None
+    wifi_rssi_dbm: Optional[int] = None
+    battery_pct: Optional[float] = None
+    firmware_version: Optional[str] = None
+    station_id: Optional[str] = None
+    device_id: Optional[str] = None

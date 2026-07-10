@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./StationVisitsModal.css";
 import "./ExportModal.css";
+import "./MediaViewer.css";
+import MediaViewer from "./MediaViewer";
 import { useStationEvents } from "../hooks/useStationEvents";
 import type {
   EventFilter,
@@ -182,37 +184,36 @@ function formatTs(iso: string): string {
 }
 
 function VisitCard({ event }: { event: StationEventDetail }) {
+  const [viewer, setViewer] = useState<string[] | null>(null);
   const hasPhoto = event.media_urls.length > 0;
   const consumedFlag = isConsumedAnomaly(event.consumed_g);
   const tempFlag = isTempAnomaly(event.temperature_c);
   const humFlag = isHumidityAnomaly(event.humidity_pct);
 
   return (
-    <div className="wt-visit-card">
-      {/* Top row: photo link + timestamp */}
-      <div className="wt-visit-card-top">
-        <button
-          className="wt-visit-photo"
-          data-has={String(hasPhoto)}
-          disabled={!hasPhoto}
-          onClick={
-            hasPhoto
-              ? () => window.open(event.media_urls[0], "_blank")
-              : undefined
-          }
-        >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z" />
-          </svg>
-          {hasPhoto ? `${event.media_urls.length} foto${event.media_urls.length > 1 ? "s" : ""}` : "Sin foto"}
-        </button>
-        <span className="wt-visit-ts">{formatTs(event.timestamp)}</span>
-      </div>
+    <>
+      {viewer && <MediaViewer urls={viewer} onClose={() => setViewer(null)} />}
+      <div className="wt-visit-card">
+        {/* Top row: thumbnail + timestamp */}
+        <div className="wt-visit-card-top">
+          {hasPhoto ? (
+            <img
+              className="wt-thumb"
+              src={event.media_urls[0]}
+              alt="foto del evento"
+              style={{ width: 44, height: 44 }}
+              onClick={() => setViewer(event.media_urls)}
+              title={`${event.media_urls.length} foto${event.media_urls.length > 1 ? "s" : ""} · clic para ampliar`}
+            />
+          ) : (
+            <span className="wt-thumb-placeholder" style={{ width: 44, height: 44 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z" />
+              </svg>
+            </span>
+          )}
+          <span className="wt-visit-ts">{formatTs(event.timestamp)}</span>
+        </div>
 
       {/* Identity row */}
       {event.is_identified ? (
@@ -277,6 +278,7 @@ function VisitCard({ event }: { event: StationEventDetail }) {
           <div className="wt-visit-metric-k">Humedad</div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

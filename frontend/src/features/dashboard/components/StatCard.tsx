@@ -7,6 +7,7 @@ interface StatCardProps {
   label: string;
   sublabel?: string;
   value?: number;
+  stringValue?: string;
   icon: ReactNode;
   paletteColor?: "primary" | "success" | "warning" | "error" | "info" | "secondary";
   loading: boolean;
@@ -18,6 +19,7 @@ export default function StatCard({
   label,
   sublabel,
   value,
+  stringValue,
   icon,
   paletteColor = "primary",
   loading,
@@ -25,7 +27,9 @@ export default function StatCard({
   placeholder = false,
 }: StatCardProps) {
   const displayValue =
-    placeholder || error ? "—" : value?.toLocaleString() ?? "—";
+    placeholder || error
+      ? "—"
+      : stringValue ?? value?.toLocaleString() ?? "—";
 
   return (
     <Paper

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./AnimalFeedingDashboard.css";
 import "./ExportModal.css";
+import "./MediaViewer.css";
+import MediaViewer from "./MediaViewer";
 import type {
   AnimalHistoryResponse,
   FeedingEvent,
@@ -277,25 +279,38 @@ function FeederRow({ item, rank }: { item: FeederRankItem; rank: number }) {
 }
 
 function EventRow({ ev }: { ev: FeedingEvent }) {
+  const [viewer, setViewer] = useState<string[] | null>(null);
   const hasPhoto = ev.media_urls.length > 0;
   return (
-    <div className="wt-dash-ev">
-      <div className="wt-dash-ev-station-col">
-        <div className="wt-dash-ev-stid">{ev.station_id.slice(0, 8).toUpperCase()}</div>
-        <div className="wt-dash-ev-stname">{ev.station_name}</div>
+    <>
+      {viewer && <MediaViewer urls={viewer} onClose={() => setViewer(null)} />}
+      <div className="wt-dash-ev">
+        <div className="wt-dash-ev-station-col">
+          <div className="wt-dash-ev-stid">{ev.station_id.slice(0, 8).toUpperCase()}</div>
+          <div className="wt-dash-ev-stname">{ev.station_name}</div>
+        </div>
+        <div className="wt-dash-ev-weight">
+          {ev.consumed_g != null ? `${ev.consumed_g.toFixed(0)} g` : "—"}
+        </div>
+        <div className="wt-dash-ev-photo">
+          {hasPhoto ? (
+            <img
+              className="wt-thumb"
+              src={ev.media_urls[0]}
+              alt="foto"
+              style={{ width: 36, height: 36 }}
+              onClick={() => setViewer(ev.media_urls)}
+              title={`${ev.media_urls.length} foto${ev.media_urls.length > 1 ? "s" : ""} · clic para ampliar`}
+            />
+          ) : (
+            <span className="wt-thumb-placeholder" style={{ width: 36, height: 36 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+            </span>
+          )}
+        </div>
+        <div className="wt-dash-ev-ts">{formatTime(ev.timestamp)}</div>
       </div>
-      <div className="wt-dash-ev-weight">
-        {ev.consumed_g != null ? `${ev.consumed_g.toFixed(0)} g` : "—"}
-      </div>
-      <div className="wt-dash-ev-photo">
-        {hasPhoto ? (
-          <span className="wt-dash-ev-has-photo">📷</span>
-        ) : (
-          <span className="wt-dash-ev-no-photo">—</span>
-        )}
-      </div>
-      <div className="wt-dash-ev-ts">{formatTime(ev.timestamp)}</div>
-    </div>
+    </>
   );
 }
 

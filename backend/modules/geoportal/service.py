@@ -14,6 +14,7 @@ from modules.geoportal.schemas import (
     DarwinCoreResponse,
     DarwinCoreSources,
     GbifTaxonomy,
+    LatestTelemetryResponse,
     ObservationSource,
     TaxonomySource,
     GeoportalAnimalRead,
@@ -479,4 +480,25 @@ class GeoportalService:
             observation=observation,
             sources=sources,
             generated_at=datetime.now(timezone.utc),
+        )
+
+    @staticmethod
+    async def get_latest_system_telemetry() -> Optional[LatestTelemetryResponse]:
+        doc = await GeoportalRepository.get_system_latest_telemetry()
+        if doc is None:
+            return None
+        # Telemetry documents store sensor fields at the top level (flattened
+        # by the IoT processor), unlike iot_events which have nested payloads.
+        ts = doc.get("ingested_at") or doc.get("timestamp")
+        if ts is None:
+            return None
+        return LatestTelemetryResponse(
+            timestamp=ts,
+            temperature_c=doc.get("temperature_c"),
+            humidity_pct=doc.get("humidity_pct"),
+            wifi_rssi_dbm=doc.get("wifi_rssi_dbm"),
+            battery_pct=doc.get("battery_pct"),
+            firmware_version=doc.get("firmware_version"),
+            station_id=doc.get("station_id"),
+            device_id=doc.get("device_id"),
         )

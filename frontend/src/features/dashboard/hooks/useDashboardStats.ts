@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchCount, fetchRecentAlerts } from "../api/dashboard.api";
-import type { AlertRead } from "../api/dashboard.types";
+import { fetchCount, fetchLatestTelemetry, fetchRecentAlerts } from "../api/dashboard.api";
+import type { AlertRead, LatestTelemetryRead } from "../api/dashboard.types";
 
 const STALE_MS = 60_000;
 
@@ -65,5 +65,14 @@ export function useRecentAlerts() {
     queryKey: ["dashboard", "alerts", "recent"],
     queryFn: fetchRecentAlerts,
     staleTime: STALE_MS,
+  });
+}
+
+export function useLatestTelemetry() {
+  return useQuery<LatestTelemetryRead>({
+    queryKey: ["dashboard", "telemetry", "latest"],
+    queryFn: fetchLatestTelemetry,
+    staleTime: STALE_MS,
+    retry: false,
   });
 }

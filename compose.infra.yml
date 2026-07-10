@@ -52,6 +52,16 @@ services:
 
   mosquitto:
     image: eclipse-mosquitto:2.0
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:-wildtrack_device}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-wildtrack_pass}
+    # Creates the passwd file from env vars on every startup, then starts broker.
+    command:
+      - sh
+      - -c
+      - |
+        mosquitto_passwd -c -b /mosquitto/config/passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD"
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
     volumes:
@@ -59,11 +69,11 @@ services:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      test: ["CMD-SHELL", "mosquitto_pub -h 127.0.0.1 -p 1883 -t healthcheck -m ping -u $$MQTT_USERNAME -P $$MQTT_PASSWORD -q 0"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 5s
+      start_period: 8s
     restart: unless-stopped
 
 volumes:

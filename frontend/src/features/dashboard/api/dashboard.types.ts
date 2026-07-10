@@ -26,3 +26,14 @@ export interface AlertListResponse {
   pages: number;
   items: AlertRead[];
 }
+
+export interface LatestTelemetryRead {
+  timestamp: string;
+  temperature_c: number | null;
+  humidity_pct: number | null;
+  wifi_rssi_dbm: number | null;
+  battery_pct: number | null;
+  firmware_version: string | null;
+  station_id: string | null;
+  device_id: string | null;
+}

@@ -10,6 +10,15 @@ from shared.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+def _mqtt_kwargs(settings) -> dict:
+    """Build optional keyword args for aiomqtt.Client (credentials when set)."""
+    kwargs: dict = {}
+    if settings.mqtt_username:
+        kwargs["username"] = settings.mqtt_username
+        kwargs["password"] = settings.mqtt_password
+    return kwargs
+
+
 async def mqtt_subscriber_task() -> None:
     settings = get_settings()
     while True:
@@ -18,6 +27,7 @@ async def mqtt_subscriber_task() -> None:
                 hostname=settings.mqtt_host,
                 port=settings.mqtt_port,
                 identifier=settings.mqtt_client_id,
+                **_mqtt_kwargs(settings),
             ) as client:
                 logger.info(
                     "MQTT connected to %s:%d as %s",
