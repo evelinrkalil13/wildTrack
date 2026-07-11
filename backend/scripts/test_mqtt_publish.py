@@ -127,16 +127,23 @@ EVENTS = {
 
 
 async def publish(device_id: str, event: str, host: str, port: int) -> None:
+    settings = get_settings()
     builder = EVENTS[event]
     topic, payload = builder(device_id)
 
     print(f"  topic   : {topic}")
     print(f"  payload : {json.dumps(payload, indent=2, default=str)}")
 
+    mqtt_kwargs: dict = {}
+    if settings.mqtt_username:
+        mqtt_kwargs["username"] = settings.mqtt_username
+        mqtt_kwargs["password"] = settings.mqtt_password
+
     async with aiomqtt.Client(
         hostname=host,
         port=port,
         identifier=f"wildtrack-test-{uuid.uuid4().hex[:8]}",
+        **mqtt_kwargs,
     ) as client:
         await client.publish(topic, json.dumps(payload, default=str), qos=1)
 

@@ -11,6 +11,7 @@ import StatCard from "@/features/dashboard/components/StatCard";
 import RecentAlerts from "@/features/dashboard/components/RecentAlerts";
 import {
   useActiveStations,
+  useLatestTelemetry,
   useOnlineDevices,
   useOpenAlerts,
   useTotalAnimals,
@@ -18,6 +19,16 @@ import {
   useTotalFoods,
   useTotalStations,
 } from "@/features/dashboard/hooks/useDashboardStats";
+
+function formatRelativeTime(isoTimestamp: string): string {
+  const diffMs = Date.now() - new Date(isoTimestamp).getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "ahora";
+  if (diffMin < 60) return `${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} h`;
+  return `${Math.floor(diffH / 24)} días`;
+}
 
 export default function DashboardPage() {
   const totalStations = useTotalStations();
@@ -27,6 +38,7 @@ export default function DashboardPage() {
   const totalAnimals = useTotalAnimals();
   const totalFoods = useTotalFoods();
   const openAlerts = useOpenAlerts();
+  const latestTelemetry = useLatestTelemetry();
 
   return (
     <Box sx={{ p: 3 }}>
@@ -122,10 +134,23 @@ export default function DashboardPage() {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             label="Última telemetría"
-            sublabel="Próximamente"
+            sublabel={(() => {
+              const d = latestTelemetry.data;
+              if (!d) return "Sin datos";
+              const parts: string[] = [];
+              if (d.temperature_c != null) parts.push(`${d.temperature_c.toFixed(1)} °C`);
+              if (d.humidity_pct != null) parts.push(`${d.humidity_pct.toFixed(0)} %`);
+              return parts.length > 0 ? parts.join(" · ") : "Sin sensores";
+            })()}
+            stringValue={
+              latestTelemetry.data
+                ? formatRelativeTime(latestTelemetry.data.timestamp)
+                : undefined
+            }
             icon={<AccessTimeIcon fontSize="small" />}
-            loading={false}
-            placeholder
+            paletteColor="info"
+            loading={latestTelemetry.isLoading}
+            error={latestTelemetry.isError}
           />
         </Grid>
       </Grid>

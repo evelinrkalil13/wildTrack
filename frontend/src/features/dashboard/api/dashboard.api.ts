@@ -1,5 +1,5 @@
 import { apiClient } from "@/api/client";
-import type { AlertListResponse, AlertRead } from "./dashboard.types";
+import type { AlertListResponse, AlertRead, LatestTelemetryRead } from "./dashboard.types";
 
 export async function fetchCount(
   path: string,
@@ -16,4 +16,9 @@ export async function fetchRecentAlerts(): Promise<AlertRead[]> {
     params: { resolved: false, page: 1, page_size: 5 },
   });
   return res.data.items;
+}
+
+export async function fetchLatestTelemetry(): Promise<LatestTelemetryRead> {
+  const res = await apiClient.get<LatestTelemetryRead>("/geoportal/telemetry/latest");
+  return res.data;
 }

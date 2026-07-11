@@ -11,6 +11,7 @@ from modules.geoportal.schemas import (
     GeoportalStationDetail,
     GeoportalStationMapItem,
     GeoportalStatsResponse,
+    LatestTelemetryResponse,
     StationEventsResponse,
 )
 from modules.geoportal.service import GeoportalService
@@ -108,6 +109,19 @@ async def get_animal_history(
             detail="Animal not found or has no RFID tag",
         )
     return history
+
+
+@router.get("/telemetry/latest", response_model=LatestTelemetryResponse)
+async def get_latest_system_telemetry(
+    _: User = Depends(get_current_user),
+) -> LatestTelemetryResponse:
+    result = await GeoportalService.get_latest_system_telemetry()
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No telemetry data available",
+        )
+    return result
 
 
 @router.get("/animals/{animal_id}/darwin-core", response_model=DarwinCoreResponse)

@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     mqtt_host: str = "localhost"
     mqtt_port: int = 1883
     mqtt_client_id: str = "wildtrack-backend"
+    mqtt_username: str = ""
+    mqtt_password: str = ""
 
     # Security
     jwt_secret_key: str = "change-me-in-production"

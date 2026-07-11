@@ -1,5 +1,8 @@
+import { useState } from "react";
 import "./StationDetailPanel.css";
 import "./ExportModal.css";
+import "./MediaViewer.css";
+import MediaViewer from "./MediaViewer";
 import type {
   ActivityItem,
   ActivityItemType,
@@ -96,6 +99,8 @@ export default function StationDetailPanel({
   const { data: activity = [], isPending: activityPending } =
     useStationActivity(stationId);
 
+  const [viewer, setViewer] = useState<string[] | null>(null);
+
   const station = detail ?? stationSummary;
   const dotKey = statusDotKey(station.status, station.open_alerts_count);
 
@@ -108,7 +113,12 @@ export default function StationDetailPanel({
   const visitas = detail?.visitas_por_dia ?? [0, 0, 0, 0, 0, 0, 0];
   const peak = Math.max(...visitas);
 
+  const lastPhotoEvent = detail?.recent_events.find((e) => e.media_urls.length > 0) ?? null;
+  const isLastIdentified = lastPhotoEvent ? lastPhotoEvent.rfid_tag !== null : null;
+
   return (
+    <>
+    {viewer && <MediaViewer urls={viewer} onClose={() => setViewer(null)} />}
     <div className="wt-detail">
       {/* ── Head ── */}
       <div className="wt-detail-head">
@@ -186,6 +196,38 @@ export default function StationDetailPanel({
           />
           {stationSummary.zone_name}
         </span>
+
+        {/* Last photo */}
+        {(detail || detailPending) && (
+          detailPending && !detail ? (
+            <div className="wt-last-photo" style={{ cursor: "default" }}>
+              <div className="wt-last-photo-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+              </div>
+            </div>
+          ) : lastPhotoEvent ? (
+            <div className="wt-last-photo" onClick={() => setViewer(lastPhotoEvent.media_urls)}>
+              <img
+                className="wt-last-photo-img"
+                src={lastPhotoEvent.media_urls[0]}
+                alt="Última foto registrada"
+              />
+              {isLastIdentified !== null && (
+                <span className="wt-last-photo-badge" data-id={String(isLastIdentified)}>
+                  {isLastIdentified ? "identificado" : "no identificado"}
+                </span>
+              )}
+              <span className="wt-last-photo-expand">⤢</span>
+            </div>
+          ) : (
+            <div className="wt-last-photo" style={{ cursor: "default" }}>
+              <div className="wt-last-photo-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+                <span>Sin fotos en eventos recientes</span>
+              </div>
+            </div>
+          )
+        )}
 
         {/* Stats grid */}
         <div className="wt-section-label" style={{ marginTop: 16 }}>Estadísticas</div>
@@ -330,6 +372,7 @@ export default function StationDetailPanel({
         )}
       </div>
     </div>
+    </>
   );
 }
 

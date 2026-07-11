@@ -129,6 +129,13 @@ class GeoportalRepository:
         return None
 
     @staticmethod
+    async def get_system_latest_telemetry() -> Optional[dict]:
+        """Returns the single most recent telemetry document across all stations."""
+        return await get_collection(COLLECTION_TELEMETRY).find_one(
+            {}, sort=[("ingested_at", -1)]
+        )
+
+    @staticmethod
     async def get_recent_events_by_station(limit: int = 3) -> dict:
         pipeline = [
             {"$match": {"station_id": {"$ne": None}}},

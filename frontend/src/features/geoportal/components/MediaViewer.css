@@ -1,0 +1,120 @@
+/* ── Full-screen photo lightbox ── */
+
+.wt-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(4, 10, 7, 0.92);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.wt-viewer-box {
+  position: relative;
+  max-width: min(90vw, 1100px);
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wt-viewer-img {
+  display: block;
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+.wt-viewer-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #16241d;
+  border: 1px solid #2a4035;
+  color: #e8f0ea;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.13s;
+  line-height: 1;
+}
+.wt-viewer-close:hover { background: #2d6a4f; }
+
+.wt-viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 64px;
+  background: rgba(22, 36, 29, 0.85);
+  border: 1px solid #2a4035;
+  color: #e8f0ea;
+  font-size: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.13s;
+  line-height: 1;
+  z-index: 10;
+}
+.wt-viewer-nav:hover:not(:disabled) { background: #2d6a4f; }
+.wt-viewer-nav:disabled { opacity: 0.25; cursor: default; }
+
+.wt-viewer-prev { left: -54px; }
+.wt-viewer-next { right: -54px; }
+
+.wt-viewer-counter {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #8aa395;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+/* ── Thumbnail (shared, used in multiple components) ── */
+.wt-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 7px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid #2a4035;
+  flex-shrink: 0;
+  transition: transform 0.13s, border-color 0.13s;
+  display: block;
+}
+.wt-thumb:hover {
+  transform: scale(1.07);
+  border-color: #52b788;
+}
+
+.wt-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 7px;
+  background: #0f1a15;
+  border: 1px solid #2a4035;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2a4035;
+  font-size: 18px;
+}
